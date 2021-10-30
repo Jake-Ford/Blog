@@ -1,0 +1,192 @@
+---
+title: "Demographic Change in Durham last 10 years"
+description: |
+  2020 Census results in Durham.
+author:
+  - name: Jacob Ford
+    url: https://example.com/norajones
+date: 10-05-2021
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+ 
+Just how much has Durham changed demographically in the last ten years? 
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+##Get Data
+
+library(caliperR)
+library(nngeo)
+library(tcadr)
+library(sf)
+library(leaflet)
+library(PL94171)
+library(janitor)
+library(dplyr)
+library(tidycensus)
+library(tidyverse)
+options(tigris_use_cache = TRUE)
+library(sf)
+library(data.table)
+library(dplyr)
+
+
+#Read PL Data in for 2020 census
+
+part1_file_path <- "C:/Users/JacobFo/OneDrive - City of Durham/TRM G2/2020 Census/August Release/PL Data/nc000012020.pl"
+part1  <- read.delim(part1_file_path, header=FALSE, colClasses="character", sep="|")
+
+part2_file_path <- "C:/Users/JacobFo/OneDrive - City of Durham/TRM G2/2020 Census/August Release/PL Data/nc000022020.pl"
+part2  <- read.delim(part2_file_path, header=FALSE, colClasses="character", sep="|")
+
+part3_file_path <- "C:/Users/JacobFo/OneDrive - City of Durham/TRM G2/2020 Census/August Release/PL Data/nc000032020.pl"
+part3  <- read.delim(part3_file_path, header=FALSE, colClasses="character", sep="|")
+
+geo_file_path <- "C:/Users/JacobFo/OneDrive - City of Durham/TRM G2/2020 Census/August Release/PL Data/ncgeo2020.pl"
+geo  <- read.delim(geo_file_path, header=FALSE, colClasses="character", sep="|")
+
+#Rename Columns
+
+colnames(geo) <- c("FILEID", "STUSAB", "SUMLEV", "GEOVAR", "GEOCOMP", "CHARITER", "CIFSN", "LOGRECNO", "GEOID", 
+  "GEOCODE", "REGION", "DIVISION", "STATE", "STATENS", "COUNTY", "COUNTYCC", "COUNTYNS", "COUSUB",
+  "COUSUBCC", "COUSUBNS", "SUBMCD", "SUBMCDCC", "SUBMCDNS", "ESTATE", "ESTATECC", "ESTATENS", 
+  "CONCIT", "CONCITCC", "CONCITNS", "PLACE", "PLACECC", "PLACENS", "TRACT", "BLKGRP", "BLOCK", 
+  "AIANHH", "AIHHTLI", "AIANHHFP", "AIANHHCC", "AIANHHNS", "AITS", "AITSFP", "AITSCC", "AITSNS",
+  "TTRACT", "TBLKGRP", "ANRC", "ANRCCC", "ANRCNS", "CBSA", "MEMI", "CSA", "METDIV", "NECTA",
+  "NMEMI", "CNECTA", "NECTADIV", "CBSAPCI", "NECTAPCI", "UA", "UATYPE", "UR", "CD116", "CD118",
+  "CD119", "CD120", "CD121", "SLDU18", "SLDU22", "SLDU24", "SLDU26", "SLDU28", "SLDL18", "SLDL22",
+  "SLDL24", "SLDL26", "SLDL28", "VTD", "VTDI", "ZCTA", "SDELM", "SDSEC", "SDUNI", "PUMA", "AREALAND",
+  "AREAWATR", "BASENAME", "NAME", "FUNCSTAT", "GCUNI", "POP100", "HU100", "INTPTLAT", "INTPTLON", 
+  "LSADC", "PARTFLAG", "UGA")
+colnames(part1) <- c("FILEID", "STUSAB", "CHARITER", "CIFSN", "LOGRECNO", 
+                     paste0("P00", c(10001:10071, 20001:20073)))
+colnames(part2) <- c("FILEID", "STUSAB", "CHARITER", "CIFSN", "LOGRECNO", 
+                     paste0("P00", c(30001:30071, 40001:40073)), 
+                     paste0("H00", 10001:10003))
+colnames(part3) <- c("FILEID", "STUSAB", "CHARITER", "CIFSN", "LOGRECNO",
+                     paste0("P00", 50001:50010))
+
+#combine
+
+combine <- Reduce(function(x,y) {merge(x, y, by=c("LOGRECNO", "STUSAB", "FILEID", "CHARITER"))}, list(geo[,-7], part1[,-4], part2[,-4], part3))
+
+combine <- combine[order(combine$LOGRECNO), c("FILEID", "STUSAB", "SUMLEV", "GEOVAR", "GEOCOMP", "CHARITER", "CIFSN", "LOGRECNO", "GEOID", 
+                                              "GEOCODE", "REGION", "DIVISION", "STATE", "STATENS", "COUNTY", "COUNTYCC", "COUNTYNS", "COUSUB",
+                                              "COUSUBCC", "COUSUBNS", "SUBMCD", "SUBMCDCC", "SUBMCDNS", "ESTATE", "ESTATECC", "ESTATENS", 
+                                              "CONCIT", "CONCITCC", "CONCITNS", "PLACE", "PLACECC", "PLACENS", "TRACT", "BLKGRP", "BLOCK", 
+                                              "AIANHH", "AIHHTLI", "AIANHHFP", "AIANHHCC", "AIANHHNS", "AITS", "AITSFP", "AITSCC", "AITSNS",
+                                              "TTRACT", "TBLKGRP", "ANRC", "ANRCCC", "ANRCNS", "CBSA", "MEMI", "CSA", "METDIV", "NECTA",
+                                              "NMEMI", "CNECTA", "NECTADIV", "CBSAPCI", "NECTAPCI", "UA", "UATYPE", "UR", "CD116", "CD118",
+                                              "CD119", "CD120", "CD121", "SLDU18", "SLDU22", "SLDU24", "SLDU26", "SLDU28", "SLDL18", "SLDL22",
+                                              "SLDL24", "SLDL26", "SLDL28", "VTD", "VTDI", "ZCTA", "SDELM", "SDSEC", "SDUNI", "PUMA", "AREALAND",
+                                              "AREAWATR", "BASENAME", "NAME", "FUNCSTAT", "GCUNI", "POP100", "HU100", "INTPTLAT", "INTPTLON", 
+                                              "LSADC", "PARTFLAG", "UGA", paste0("P00", c(10001:10071, 20001:20073)), paste0("P00", c(30001:30071, 40001:40073)), 
+                                              paste0("H00", 10001:10003), paste0("P00", 50001:50010))]
+rownames(combine) <- 1:nrow(combine)
+
+county_fips <- c("001","037","063","069","077","085","101","127","135","145","183")
+
+##Sum Level 750 is blocks
+
+prep_census_2020 <- combine %>%
+  filter(combine$COUNTY %in% county_fips & combine$SUMLEV == "750")
+
+clean_census <- pl_select_standard(prep_census_2020, clean_names=TRUE)
+
+##Household Bucket: HH = H0010002,occupied households; H0010001 is Total
+
+clean_census$HH <- as.integer(prep_census_2020$H0010002  )
+
+##Population Buckets: HH, HH_Pop, NonHH_Pop
+
+
+clean_census$pop <- as.integer(clean_census$pop)
+
+
+clean_census$InstPop <- as.integer(prep_census_2020$P0050002)
+clean_census$Correctional <- as.integer(prep_census_2020$P0050003)
+clean_census$Juvenile <- as.integer(prep_census_2020$P0050004)
+clean_census$NursingHome <- as.integer(prep_census_2020$P0050005)
+clean_census$OtherInst <- as.integer(prep_census_2020$P0050006)
+clean_census$NonInstPop <- as.integer(prep_census_2020$P0050007)
+
+#Other_NonInst_GQ is the total of Stud_GQ, Military and OtherNon, differs slightly from our own
+clean_census$Stud_GQ <- as.integer(prep_census_2020$P0050008)
+clean_census$Military <- as.integer(prep_census_2020$P0050009)
+clean_census$OtherNon <- as.integer(prep_census_2020$P0050010)
+
+clean_census$TotalPop <- clean_census$pop
+clean_census$HH_Pop <- clean_census$TotalPop - clean_census$NonInstPop - clean_census$InstPop
+
+clean_census$NonHH_Pop <- clean_census$NonInstPop + clean_census$InstPop
+
+
+#Join with empty 2020 block layer got from get_decennial. Clean GEOID
+clean_census$GEOID_v2 <- sub(".*7500000US", "", clean_census$GEOID)
+
+blocks_2020 <- read_sf('C:/Users/JacobFo/OneDrive - City of Durham/2020 Blocks Backup/2020_Census_Blocks.shp') 
+
+blocks_2020 <- blocks_2020 %>%
+  select(GEOID20, county, geometry)
+
+blocks_2020$GEOID_v2 <- blocks_2020$GEOID20
+
+##Tag each to get the geometry
+census_2020 <- clean_census %>%
+  select(GEOID_v2, TotalPop, HH_Pop, NonHH_Pop, Stud_GQ, HH )
+
+##Final Join
+
+prep_2020 <- st_as_sf(left_join(census_2020,blocks_2020, by="GEOID_v2"))
+
+durham_2020_blocks <- prep_2020 %>%
+  filter(county=="063")
+
+
+
+
+```
+
+
+
+
+
+```{r}
+durham_2010_blocks <- get_decennial(geography = "block", state="NC", county="Durham",
+                       variables = "P013001", 
+                       year = 2010, geometry=TRUE)
+```
+
+```{r}
+vars <- load_variables(2010, "sf1", cache = TRUE)
+
+View(vars)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
