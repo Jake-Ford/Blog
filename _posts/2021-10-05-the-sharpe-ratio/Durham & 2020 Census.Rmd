@@ -212,7 +212,7 @@ View(vars)
 
 
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(scales)
 
 
@@ -356,7 +356,7 @@ map %>% hideGroup("White_2010") %>% hideGroup("Hispanic_2010") %>% hideGroup("Wh
 TLD 
 
 ```{r}
-
+getwd()
 ```
 
 
@@ -364,7 +364,31 @@ TLD
 
 
 
+2020 census data is available at the block level, allowing us to see the concentration of population by race and age - and how those have changed since 2010. 
 
+The goal of this blog will be to analyze how each congresssional district measures up to each other in demographic representation. Has Asheville's 11th become more or less white since 2010? Where are Hispanics, a growing percentage of 
+
+Steps:
+
+1. Overall compare 2010 to 2020 - how many more people, HH's, white-only, black and hispanics since 2010? 
+2. Compare each congressional district's demographic data to each other - not so much diving into packing vs cracking, but just higher level comparison's. 
+
+Let's load the 2019 Congressional District and take a look - what
+
+```{r}
+nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
+
+trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
+
+
+temp <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
+
+leaflet(temp) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data=temp)
+
+
+```
 
 
 
