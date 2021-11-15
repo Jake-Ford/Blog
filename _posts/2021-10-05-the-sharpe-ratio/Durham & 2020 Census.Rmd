@@ -19,6 +19,7 @@ output:
 
 
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 library(caliperR)
 library(nngeo)
 library(tcadr)
@@ -246,8 +247,11 @@ Steps:
 
 Let's load the 2019 Congressional District and take a look - what
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
+nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
+nc_congressional_2021$Partisan_Lean <- c(-18,1,-20,-10,25,42,-20,-20,45,-26,-16,-16,-25,-12)
+
 
 trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
 
@@ -260,15 +264,34 @@ pal <- colorFactor(
 )
 
 
+temp_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
 
-leaflet(temp) %>%
+pal_2021 <- colorNumeric(
+  palette=c('red','blue'),
+  domain=temp_2021$Partisan_Lean
+)
+
+color
+
+
+map <- leaflet(temp) %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(data=temp,
+  addPolygons(data=temp, group="2019",
               popup=paste("Congressional District: ", temp$District, "<br>",
                           "Party: ", temp$sParty, "<br>",
                           "Representative 2019: ", temp$sName),
               weight=1,
-              color =~pal(temp$sParty))
+              color =~pal(temp$sParty)) %>%
+  addPolygons(data=temp_2021, group="2021",
+              popup=paste("Congressional District: ", temp_2021$DISTRICT, "<br>", "Partisan Lean: ", temp_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(temp_2021$Partisan_Lean),
+              weight=1) %>%
+  
+  addLayersControl(baseGroups = c("2019", "2021"))
+
+
+map
+  
+ 
 
 
 ```
@@ -278,7 +301,9 @@ leaflet(temp) %>%
 
 
 
+# EDA
 
+Summarize 
 
 
 
