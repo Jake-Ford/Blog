@@ -12,20 +12,13 @@ output:
 ---
 
 
+
+
+
+
+
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-
-trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
-
-```
- 
-Just how much has Durham changed demographically in the last ten years? 
-
-
-
-```{r message=FALSE, warning=FALSE, include=FALSE}
-##Get Data
-
 library(caliperR)
 library(nngeo)
 library(tcadr)
@@ -41,318 +34,185 @@ library(sf)
 library(data.table)
 library(dplyr)
 
+# remotes::install_github("walkerke/tidycensus")
+# remotes::install_github("walkerke/tigris")
+library(tidycensus)
+library(tidyverse)
+library(tigris)
 
-#Read PL Data in for 2020 census
-
-part1_file_path <- "C:/Users/JacobFo/OneDrive - City of Durham/TRM G2/2020 Census/August Release/PL Data/nc000012020.pl"
-part1  <- read.delim(part1_file_path, header=FALSE, colClasses="character", sep="|")
-
-part2_file_path <- "C:/Users/JacobFo/OneDrive - City of Durham/TRM G2/2020 Census/August Release/PL Data/nc000022020.pl"
-part2  <- read.delim(part2_file_path, header=FALSE, colClasses="character", sep="|")
-
-part3_file_path <- "C:/Users/JacobFo/OneDrive - City of Durham/TRM G2/2020 Census/August Release/PL Data/nc000032020.pl"
-part3  <- read.delim(part3_file_path, header=FALSE, colClasses="character", sep="|")
-
-geo_file_path <- "C:/Users/JacobFo/OneDrive - City of Durham/TRM G2/2020 Census/August Release/PL Data/ncgeo2020.pl"
-geo  <- read.delim(geo_file_path, header=FALSE, colClasses="character", sep="|")
-
-#Rename Columns
-
-colnames(geo) <- c("FILEID", "STUSAB", "SUMLEV", "GEOVAR", "GEOCOMP", "CHARITER", "CIFSN", "LOGRECNO", "GEOID", 
-  "GEOCODE", "REGION", "DIVISION", "STATE", "STATENS", "COUNTY", "COUNTYCC", "COUNTYNS", "COUSUB",
-  "COUSUBCC", "COUSUBNS", "SUBMCD", "SUBMCDCC", "SUBMCDNS", "ESTATE", "ESTATECC", "ESTATENS", 
-  "CONCIT", "CONCITCC", "CONCITNS", "PLACE", "PLACECC", "PLACENS", "TRACT", "BLKGRP", "BLOCK", 
-  "AIANHH", "AIHHTLI", "AIANHHFP", "AIANHHCC", "AIANHHNS", "AITS", "AITSFP", "AITSCC", "AITSNS",
-  "TTRACT", "TBLKGRP", "ANRC", "ANRCCC", "ANRCNS", "CBSA", "MEMI", "CSA", "METDIV", "NECTA",
-  "NMEMI", "CNECTA", "NECTADIV", "CBSAPCI", "NECTAPCI", "UA", "UATYPE", "UR", "CD116", "CD118",
-  "CD119", "CD120", "CD121", "SLDU18", "SLDU22", "SLDU24", "SLDU26", "SLDU28", "SLDL18", "SLDL22",
-  "SLDL24", "SLDL26", "SLDL28", "VTD", "VTDI", "ZCTA", "SDELM", "SDSEC", "SDUNI", "PUMA", "AREALAND",
-  "AREAWATR", "BASENAME", "NAME", "FUNCSTAT", "GCUNI", "POP100", "HU100", "INTPTLAT", "INTPTLON", 
-  "LSADC", "PARTFLAG", "UGA")
-colnames(part1) <- c("FILEID", "STUSAB", "CHARITER", "CIFSN", "LOGRECNO", 
-                     paste0("P00", c(10001:10071, 20001:20073)))
-colnames(part2) <- c("FILEID", "STUSAB", "CHARITER", "CIFSN", "LOGRECNO", 
-                     paste0("P00", c(30001:30071, 40001:40073)), 
-                     paste0("H00", 10001:10003))
-colnames(part3) <- c("FILEID", "STUSAB", "CHARITER", "CIFSN", "LOGRECNO",
-                     paste0("P00", 50001:50010))
-
-#combine
-
-combine <- Reduce(function(x,y) {merge(x, y, by=c("LOGRECNO", "STUSAB", "FILEID", "CHARITER"))}, list(geo[,-7], part1[,-4], part2[,-4], part3))
-
-combine <- combine[order(combine$LOGRECNO), c("FILEID", "STUSAB", "SUMLEV", "GEOVAR", "GEOCOMP", "CHARITER", "CIFSN", "LOGRECNO", "GEOID", 
-                                              "GEOCODE", "REGION", "DIVISION", "STATE", "STATENS", "COUNTY", "COUNTYCC", "COUNTYNS", "COUSUB",
-                                              "COUSUBCC", "COUSUBNS", "SUBMCD", "SUBMCDCC", "SUBMCDNS", "ESTATE", "ESTATECC", "ESTATENS", 
-                                              "CONCIT", "CONCITCC", "CONCITNS", "PLACE", "PLACECC", "PLACENS", "TRACT", "BLKGRP", "BLOCK", 
-                                              "AIANHH", "AIHHTLI", "AIANHHFP", "AIANHHCC", "AIANHHNS", "AITS", "AITSFP", "AITSCC", "AITSNS",
-                                              "TTRACT", "TBLKGRP", "ANRC", "ANRCCC", "ANRCNS", "CBSA", "MEMI", "CSA", "METDIV", "NECTA",
-                                              "NMEMI", "CNECTA", "NECTADIV", "CBSAPCI", "NECTAPCI", "UA", "UATYPE", "UR", "CD116", "CD118",
-                                              "CD119", "CD120", "CD121", "SLDU18", "SLDU22", "SLDU24", "SLDU26", "SLDU28", "SLDL18", "SLDL22",
-                                              "SLDL24", "SLDL26", "SLDL28", "VTD", "VTDI", "ZCTA", "SDELM", "SDSEC", "SDUNI", "PUMA", "AREALAND",
-                                              "AREAWATR", "BASENAME", "NAME", "FUNCSTAT", "GCUNI", "POP100", "HU100", "INTPTLAT", "INTPTLON", 
-                                              "LSADC", "PARTFLAG", "UGA", paste0("P00", c(10001:10071, 20001:20073)), paste0("P00", c(30001:30071, 40001:40073)), 
-                                              paste0("H00", 10001:10003), paste0("P00", 50001:50010))]
-rownames(combine) <- 1:nrow(combine)
-
-county_fips <- c("001","037","063","069","077","085","101","127","135","145","183")
-
-##Sum Level 750 is blocks
-
-prep_census_2020 <- combine %>%
-  filter(combine$COUNTY %in% county_fips & combine$SUMLEV == "750")
-
-clean_census <- pl_select_standard(prep_census_2020, clean_names=TRUE)
-
-##Household Bucket: HH = H0010002,occupied households; H0010001 is Total
-
-clean_census$HH <- as.integer(prep_census_2020$H0010002  )
-
-##Population Buckets: HH, HH_Pop, NonHH_Pop
+vars_2020 <- load_variables(2020,"pl",cache=TRUE)
+vars_2010 <- load_variables(2010,"sf1", cache=TRUE)
+vars_2019 <- load_variables(2019,"acs5", cache=TRUE)
 
 
-clean_census$pop <- as.integer(clean_census$pop)
 
+##Hispanic = P004003 in 2010; P2_002N in 2020; B03001_003 in 2019 ACS
 
-clean_census$InstPop <- as.integer(prep_census_2020$P0050002)
-clean_census$Correctional <- as.integer(prep_census_2020$P0050003)
-clean_census$Juvenile <- as.integer(prep_census_2020$P0050004)
-clean_census$NursingHome <- as.integer(prep_census_2020$P0050005)
-clean_census$OtherInst <- as.integer(prep_census_2020$P0050006)
-clean_census$NonInstPop <- as.integer(prep_census_2020$P0050007)
-
-#Other_NonInst_GQ is the total of Stud_GQ, Military and OtherNon, differs slightly from our own
-clean_census$Stud_GQ <- as.integer(prep_census_2020$P0050008)
-clean_census$Military <- as.integer(prep_census_2020$P0050009)
-clean_census$OtherNon <- as.integer(prep_census_2020$P0050010)
-
-clean_census$TotalPop <- clean_census$pop
-clean_census$HH_Pop <- clean_census$TotalPop - clean_census$NonInstPop - clean_census$InstPop
-
-clean_census$NonHH_Pop <- clean_census$NonInstPop + clean_census$InstPop
-
-clean_census$WhiteAlone <- prep_census_2020$P0010003
-clean_census$Black <- prep_census_2020$P0010004
-clean_census$Asian <- prep_census_2020$P0010006
-clean_census$Hispanic <- prep_census_2020$P0040002
-
-
-#Join with empty 2020 block layer got from get_decennial. Clean GEOID
-clean_census$GEOID_v2 <- sub(".*7500000US", "", clean_census$GEOID)
-
-blocks_2020 <- read_sf('C:/Users/JacobFo/OneDrive - City of Durham/2020 Blocks Backup/2020_Census_Blocks.shp') 
-
-blocks_2020 <- blocks_2020 %>%
-  select(GEOID20, county, geometry)
-
-blocks_2020$GEOID_v2 <- blocks_2020$GEOID20
-
-##Tag each to get the geometry
-census_2020 <- clean_census %>%
-  select(GEOID_v2, TotalPop, HH_Pop, NonHH_Pop, Stud_GQ, HH, WhiteAlone, Black, Asian, Hispanic )
-
-census_2020$WhiteAlone <- as.integer(census_2020$WhiteAlone)
-census_2020$Black <- as.integer(census_2020$Black)
-census_2020$Asian <- as.integer(census_2020$Asian)
-census_2020$Hispanic <- as.integer(census_2020$Hispanic)
-
-##Final Join
-
-prep_2020 <- st_as_sf(left_join(census_2020,blocks_2020, by="GEOID_v2"))
-
-durham_2020_blocks <- prep_2020 %>%
-  filter(county=="063") %>%
-  mutate(pctWhite_20 = WhiteAlone/(WhiteAlone+ Black+ Asian+Hispanic),
-         pctBlack_20 =Black/(WhiteAlone+ Black+ Asian+Hispanic), 
-         pctAsian_20 =Asian/(WhiteAlone+ Black+ Asian+Hispanic),
-         pctHispanic_20 =Hispanic/(WhiteAlone+ Black+ Asian+Hispanic))
-
-
+## Black (black alone) 	P003003 in 2010 P1_004N in 2020
 
 
 ```
-
-```{r}
-
-my_counties <- unique(trm_taz_g2$COUNTY)
-
-```
+ 
+Just how much has Durham changed demographically in the last ten years? 
 
 
-
-
-```{r message=FALSE, warning=FALSE}
-nc_2010 <- get_decennial(geography = "block", state="NC", county = my_counties,
-                       variables = c(HH="H003002",
-                                     Hispanic="P004003",
-                                     Black="P012B001",
-                                     White="P012A001",
-                                     Asian="H006005",
-                                     TotalPop="H006001"), 
-                       year = 2010, geometry=TRUE)
-
-
-temp <- nc_2010 %>%
-  group_by(GEOID) %>%
-  summarize(HH=sum(value[variable=="HH"], na.rm=T),
-            TotalPop=sum(value[variable=="TotalPop"], na.rm=T),
-             Black=sum(value[variable=="Black"], na.rm=T),
-             White=sum(value[variable=="White"], na.rm=T),
-             Asian=sum(value[variable=="Asian"], na.rm=T),
-             Hispanic=sum(value[variable=="Hispanic"], na.rm=T))
-
-
-nc_2010_final <- temp %>%
-    mutate(pctWhite_10 = White/(White+ Black+ Asian+Hispanic),
-         pctBlack_10 =Black/(White+ Black+ Asian+Hispanic), 
-         pctAsian_10 =Asian/(White+ Black+ Asian+Hispanic),
-         pctHispanic_10 =Hispanic/(White+ Black+ Asian+Hispanic))
-
-```
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-vars <- load_variables(2010, "sf1", cache = TRUE)
 
-View(vars)
+durham_hispanic_2020 <- get_decennial(
+  geography="block",
+  variables="P2_002N",
+  summary_var="P2_001N",
+  state="NC",
+  county="Durham",
+  year=2020,
+  geometry=TRUE
+) %>% 
+  mutate(pct_hispanic=100*(value/summary_value))
+
+durham_hispanic_2010 <- get_decennial(
+  geography="block",
+  variables="P004003",
+  summary_var="P004001",
+  state="NC",
+  county="Durham",
+  year=2010,
+  geometry=TRUE
+) %>% 
+  mutate(pct_hispanic=100*(value/summary_value))
+
+
+ 
+
 ```
-
-
-
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(scales)
+library(leaflet)
 
+pal <- colorNumeric(
+  palette = "YlOrRd", na.color = "#808080",
+  domain = durham_hispanic_2010$pct_hispanic)
+
+
+map <- leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  ##Hispanics
+  addPolygons(data=durham_hispanic_2010,
+              fillColor=~pal(pct_hispanic),
+              stroke=FALSE, weight=2,fillOpacity = 0.7,
+              popup = paste("GEOID: ", durham_hispanic_2010$GEOID , "<br>",
+                            "Pct Hispanic: ", durham_hispanic_2010$pct_hispanic
+                            ), 
+              label="Hispanic 2010",
+            group="Hispanic 2010") %>%
+
+  
+    addPolygons(data=durham_hispanic_2020,
+              fillColor=~pal(pct_hispanic),
+              stroke=FALSE, weight=2,fillOpacity = 0.7,
+              popup = paste("GEOID: ", durham_hispanic_2020$GEOID , "<br>",
+                            "Pct Hispanic: ", durham_hispanic_2020$pct_hispanic
+                            ), 
+              label="Hispanic 2020",
+            group="Hispanic 2020") %>%
+  addLegend("bottomright",
+            pal=pal,
+            value=durham_hispanic_2020$pct_hispanic,
+            title="Percent Hispanic") %>%
+  
+  
+    addLayersControl(baseGroups = c("Hispanic 2020", "Hispanic 2010"))
+
+map
+
+```
+
+
+
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+counties <- c("Durham", "Orange", "Wake")
+
+three_2020 <- get_decennial(
+  geography="tract",
+  variables="P2_002N",
+  summary_var="P2_001N",
+  state="NC",
+  county=counties,
+  year=2020,
+  geometry=TRUE
+) %>% 
+  mutate(pct_hispanic=100*(value/summary_value))
+
+three_2010 <- get_decennial(
+  geography="tract",
+  variables="P004003",
+  summary_var="P004001",
+  state="NC",
+  county=counties,
+  year=2010,
+  geometry=TRUE
+) %>% 
+  mutate(pct_hispanic=100*(value/summary_value))
+# 
+# three_2019 <- get_acs(
+#   geography="block group",
+#   variables="B03001_003",
+#   summary_var="B03001_001",
+#   state="NC",
+#   county=counties,
+#   year=2019,
+#   geometry=TRUE
+# ) %>% 
+#   mutate(pct_hispanic=100*(value/summary_value))
+
+
+
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
 pal <- colorNumeric(
   palette = "YlOrRd", na.color = "#808080",
-  domain = durham_2010_blocks_final$pctWhite_10)
+  domain = three_2010$pct_hispanic)
 
-pal_a <- colorNumeric(
-  palette = "YlOrRd", na.color = "#808080",
-  domain = durham_2020_blocks$pctWhite_20)
 
-pal_2 <- colorNumeric(
-  palette = "YlGnBu", na.color = "#808080",
-  domain = durham_2010_blocks_final$pctBlack_10)
-
-pal_2_a <- colorNumeric(
-  palette = "YlGnBu", na.color = "#808080",
-  domain = durham_2020_blocks$pctBlack_20)
-
-pal_3 <- colorNumeric(
-  palette = "YlOrBr", na.color = "#808080",
-  domain = durham_2010_blocks_final$pctHispanic_10)
-
-pal_3_a <- colorNumeric(
-  palette = "YlOrBr", na.color = "#808080",
-  domain = durham_2020_blocks$pctHispanic_20)
-
-durham_2010_blocks_final <- st_as_sf(durham_2010_blocks_final)
-
-map <- leaflet(durham_2010_blocks_final) %>%
+map <- leaflet() %>%
   addProviderTiles("CartoDB.Positron") %>%
-  ##Whites
-  addPolygons(data=durham_2010_blocks_final,
-              fillColor=~pal(pctWhite_10),
+  ##Hispanics
+  addPolygons(data=three_2010,
+              fillColor=~pal(pct_hispanic),
               stroke=FALSE, weight=2,fillOpacity = 0.7,
-              popup = paste("GEOID: ", durham_2010_blocks_final$GEOID , "<br>",
-                            "Pct White Alone: ", durham_2010_blocks_final$pctWhite_10
+              popup = paste("GEOID: ", three_2010$GEOID , "<br>",
+                            "Pct Hispanic: ", three_2010$pct_hispanic
                             ), 
-              label="White_2010",
-            group="White_2010") %>%
+              label="Hispanic 2010",
+            group="Hispanic 2010") %>%
+
+    addPolygons(data=three_2020,
+              fillColor=~pal(pct_hispanic),
+              stroke=FALSE, weight=2,fillOpacity = 0.7,
+              popup = paste("GEOID: ", three_2020$GEOID , "<br>",
+                            "Pct Hispanic: ", three_2020$pct_hispanic
+                            ), 
+              label="Hispanic 2020",
+            group="Hispanic 2020") %>%
   addLegend("bottomright",
             pal=pal,
-            value=durham_2010_blocks_final$pctWhite_10,
-            label="White_2010",
-            title="Percent White 2010",
-            group="White_2010") %>%
-  
-  addPolygons(data=durham_2020_blocks,
-              fillColor=~pal_a(pctWhite_20),
-              stroke=FALSE,weight=2,fillOpacity=0.7,
-              popup=paste("GEOID: ", durham_2020_blocks$GEOID_v2, "<br>",
-                          "Pct White Alone: ", durham_2020_blocks$pctWhite_20),
-              label="White_2020",
-              group="White_2020") %>%
-    addLegend("bottomright",
-            pal=pal_a,
-            value=durham_2020_blocks$pctWhite_20,
-            label="White_2020",
-            title="Percent White 2020",
-            group="White_2020") %>%
+            value=three_2020$pct_hispanic,
+            title="Percent Hispanic 2020") %>%
   
   
-  
-  
-  ##Blacks
-  addPolygons(data=durham_2010_blocks_final,
-              fillColor=~pal_2(pctBlack_10),
-              stroke=FALSE, weight=2, fillOpacity=0.6,
-              popup = paste("GEOID: ", durham_2010_blocks_final$GEOID, "<br>",
-                            "Pct Black Alone: ", durham_2010_blocks_final$pctBlack_10),
-              label="Black_2010",
-            group="Black_2010") %>%
-    addLegend("bottomright",
-            pal=pal_2,
-            value=durham_2010_blocks_final$pctBlack_10,
-            label="Black_2010",
-            title="Percent Black 2010",
-            group="Black_2010") %>%
-  
-    addPolygons(data=durham_2020_blocks,
-              fillColor=~pal_2_a(pctBlack_20),
-              stroke=FALSE,weight=2,fillOpacity=0.7,
-              popup=paste("GEOID: ", durham_2020_blocks$GEOID_v2, "<br>",
-                          "Pct Black Alone: ", durham_2020_blocks$pctBlack_20),
-              label="Black_2020",
-              group="Black_2020") %>%
-    # addLegend("bottomright",
-    #         pal=pal_2_a,
-    #         value=durham_2020_blocks$PctBlack_20,
-    #         label="Black_2020",
-    #         title="Percent Black 2020",
-    #         group="Black_2020") %>%
+    addLayersControl(baseGroups = c("Hispanic 2020", "Hispanic 2010"))
 
-
-  ##Hispanics
-  addPolygons(data=durham_2010_blocks_final,
-              fillColor=~pal_3(pctHispanic_10),
-              stroke=FALSE, weight=2, fillOpacity=0.6,
-              popup = paste("GEOID: ", durham_2010_blocks_final$GEOID, "<br>",
-                            "Pct Hispanic Alone: ", durham_2010_blocks_final$pctHispanic_10),
-              label="Hispanic_2010",
-            group="Hispanic_2010") %>%
-    addLegend("bottomright",
-            pal=pal_3,
-            value=durham_2010_blocks_final$pctHispanic_10,
-            label="Hispanic_2010",
-            title="Percent Hispanic 2010",
-            group="Hispanic_2010") %>%
-  
-  addPolygons(data=durham_2020_blocks,
-              fillColor=~pal_3_a(pctHispanic_20),
-              stroke=FALSE,weight=2,fillOpacity=0.7,
-              popup=paste("GEOID: ", durham_2020_blocks$GEOID_v2, "<br>",
-                          "Pct Hispanic Alone: ", durham_2020_blocks$pctHispanic_20),
-              label="Hispanic_2020",
-              group="Hispanic_2020") %>%
-    addLegend("bottomright",
-            pal=pal_3_a,
-            value=durham_2020_blocks$pctHispanic_20,
-            label="Hispanic_2020",
-            title="Percent Hispanic 2020",
-            group="Hispanic_2020") %>%
-  
-  
-  
-  
-  
-  
-  addLayersControl(overlayGroups = c("White_2010", "White_2020", "Black_2010", "Black_2020", "Hispanic_2010", "Hispanic_2020"))
-
-map %>% hideGroup("White_2010") %>% hideGroup("Hispanic_2010") %>% hideGroup("White_2020")%>% hideGroup("Hispanic_2020")%>% hideGroup("Black_2020")
+map
 
 ```
 
@@ -361,11 +221,14 @@ map %>% hideGroup("White_2010") %>% hideGroup("Hispanic_2010") %>% hideGroup("Wh
 
 
 
-TLD 
 
-```{r}
-getwd()
-```
+
+
+
+
+
+
+
 
 
 
