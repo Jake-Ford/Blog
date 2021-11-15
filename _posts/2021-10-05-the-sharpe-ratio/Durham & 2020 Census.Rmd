@@ -14,6 +14,9 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+
+trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
+
 ```
  
 Just how much has Durham changed demographically in the last ten years? 
@@ -169,12 +172,17 @@ durham_2020_blocks <- prep_2020 %>%
 
 ```
 
+```{r}
+
+my_counties <- unique(trm_taz_g2$COUNTY)
+
+```
 
 
 
 
 ```{r message=FALSE, warning=FALSE}
-durham_2010_blocks <- get_decennial(geography = "block", state="NC", county="Durham",
+nc_2010 <- get_decennial(geography = "block", state="NC", county = my_counties,
                        variables = c(HH="H003002",
                                      Hispanic="P004003",
                                      Black="P012B001",
@@ -184,7 +192,7 @@ durham_2010_blocks <- get_decennial(geography = "block", state="NC", county="Dur
                        year = 2010, geometry=TRUE)
 
 
-temp <- durham_2010_blocks %>%
+temp <- nc_2010 %>%
   group_by(GEOID) %>%
   summarize(HH=sum(value[variable=="HH"], na.rm=T),
             TotalPop=sum(value[variable=="TotalPop"], na.rm=T),
@@ -194,7 +202,7 @@ temp <- durham_2010_blocks %>%
              Hispanic=sum(value[variable=="Hispanic"], na.rm=T))
 
 
-durham_2010_blocks_final <- temp %>%
+nc_2010_final <- temp %>%
     mutate(pctWhite_10 = White/(White+ Black+ Asian+Hispanic),
          pctBlack_10 =Black/(White+ Black+ Asian+Hispanic), 
          pctAsian_10 =Asian/(White+ Black+ Asian+Hispanic),
@@ -383,9 +391,21 @@ trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2
 
 temp <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
 
+pal <- colorFactor(
+  palette=c('blue','red'),
+  domain=temp$sParty
+)
+
+
+
 leaflet(temp) %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(data=temp)
+  addPolygons(data=temp,
+              popup=paste("Congressional District: ", temp$District, "<br>",
+                          "Party: ", temp$sParty, "<br>",
+                          "Representative 2019: ", temp$sName),
+              weight=1,
+              color =~pal(temp$sParty))
 
 
 ```
