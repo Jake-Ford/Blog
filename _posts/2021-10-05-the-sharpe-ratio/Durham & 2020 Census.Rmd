@@ -251,6 +251,15 @@ Let's load the 2019 Congressional District and take a look - what
 nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
 nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
 nc_congressional_2021$Partisan_Lean <- c(-18,1,-20,-10,25,42,-20,-20,45,-26,-16,-16,-25,-12)
+nc_congressional_2021$color <- case_when(
+       nc_congressional_2021$Partisan_Lean  < -19 ~ -3,
+        nc_congressional_2021$Partisan_Lean < -10 ~ -2,
+        nc_congressional_2021$Partisan_Lean < -5 ~ -1,
+        nc_congressional_2021$Partisan_Lean < 5 ~ 0, 
+        nc_congressional_2021$Partisan_Lean  < 10 ~ 1,
+        nc_congressional_2021$Partisan_Lean > 10 ~ 2 ,
+         
+)
 
 
 trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
@@ -264,14 +273,21 @@ pal <- colorFactor(
 )
 
 
+
 temp_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
 
-pal_2021 <- colorNumeric(
-  palette=c('red','blue'),
-  domain=temp_2021$Partisan_Lean
+library(RColorBrewer)
+
+colfunc <- colorRampPalette(c("#2C77BF", "red"))
+
+
+
+
+pal_2021 <- colorFactor(
+  palette=c('darkred','red', 'pink', 'grey', 'blue', 'darkblue'),
+  domain=c(-3,-2,-1,0,1,2)
 )
 
-color
 
 
 map <- leaflet(temp) %>%
@@ -283,8 +299,8 @@ map <- leaflet(temp) %>%
               weight=1,
               color =~pal(temp$sParty)) %>%
   addPolygons(data=temp_2021, group="2021",
-              popup=paste("Congressional District: ", temp_2021$DISTRICT, "<br>", "Partisan Lean: ", temp_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(temp_2021$Partisan_Lean),
-              weight=1) %>%
+              popup=paste("Congressional District: ", temp_2021$DISTRICT, "<br>", "Partisan Lean: ", temp_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(temp_2021$color),
+              weight=1, fillOpacity =0.5) %>%
   
   addLayersControl(baseGroups = c("2019", "2021"))
 
@@ -303,7 +319,64 @@ map
 
 # EDA
 
-Summarize 
+Summarize black and hispanic representation
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+hispanic_2020 <- get_decennial(
+  geography="tract",
+  variables="P2_002N",
+  summary_var="P2_001N",
+  state="NC",
+  year=2020,
+  geometry=TRUE
+) %>% 
+  mutate(pct_hispanic=100*(value/summary_value))
+
+
+
+hispanic_2010 <- get_decennial(
+  geography="tract",
+  variables="P004003",
+  summary_var="P004001",
+  state="NC",
+  year=2010,
+  geometry=TRUE
+) %>% 
+  mutate(pct_hispanic=100*(value/summary_value))
+
+
+hisp_pal <- colorNumeric(
+  palette = "YlOrRd", na.color = "#808080",
+  domain = hispanic_2020$pct_hispanic)
+
+
+map <- leaflet(temp) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data=temp, group="2019",
+              popup=paste("Congressional District: ", temp$District, "<br>",
+                          "Party: ", temp$sParty, "<br>",
+                          "Representative 2019: ", temp$sName),
+              weight=1,
+              color =~pal(temp$sParty)) %>%
+  addPolygons(data=temp_2021, group="2021",
+              popup=paste("Congressional District: ", temp_2021$DISTRICT, "<br>", "Partisan Lean: ", temp_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(temp_2021$color),
+              weight=1, fillOpacity =0.5) %>%
+  addPolygons(data=hispanic_2020, 
+              popup=paste("Census Tract: ", hispanic_2020$GEOID, "<br>", "Percent Hispanic: ", hispanic_2020$pct_hispanic ),
+              color =~hisp_pal(hispanic_2020$pct_hispanic),
+              weight=1, fillOpacity =0.5,group="2020 Hispanic") %>%
+  addPolygons(data=hispanic_2010, 
+              popup=paste("Census Tract: ", hispanic_2010$GEOID, "<br>", "Percent Hispanic: ", hispanic_2010$pct_hispanic ),
+              color =~hisp_pal(hispanic_2010$pct_hispanic),
+              weight=1, fillOpacity =0.5,group="2010 Hispanic") %>%
+      addLayersControl(baseGroups = c("2019", "2021", "2020 Hispanic", "2010 Hispanic"))
+                       
+map
+
+
+```
+
 
 
 
