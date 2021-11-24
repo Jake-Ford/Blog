@@ -61,7 +61,7 @@ Just how much has Durham changed demographically in the last ten years?
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 
 durham_hispanic_2020 <- get_decennial(
-  geography="block",
+  geography="tract",
   variables="P2_002N",
   summary_var="P2_001N",
   state="NC",
@@ -251,6 +251,8 @@ Let's load the 2019 Congressional District and take a look - what
 nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
 nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
 nc_congressional_2021$Partisan_Lean <- c(-18,1,-20,-10,25,42,-20,-20,45,-26,-16,-16,-25,-12)
+
+##source for paritisan lean: https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/
 nc_congressional_2021$color <- case_when(
        nc_congressional_2021$Partisan_Lean  < -19 ~ -3,
         nc_congressional_2021$Partisan_Lean < -10 ~ -2,
