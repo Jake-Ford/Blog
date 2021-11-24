@@ -250,6 +250,14 @@ Let's load the 2019 Congressional District and take a look - what
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
 nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
+
+nc_congressional_2021$DISTRICT <- as.integer(nc_congressional_2021$DISTRICT)
+
+
+
+
+nc_congressional_2021 <- nc_congressional_2021[order(nc_congressional_2021$DISTRICT),]
+
 nc_congressional_2021$Partisan_Lean <- c(-18,1,-20,-10,25,42,-20,-20,45,-26,-16,-16,-25,-12)
 
 ##source for paritisan lean: https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/
@@ -262,7 +270,6 @@ nc_congressional_2021$color <- case_when(
         nc_congressional_2021$Partisan_Lean > 10 ~ 2 ,
          
 )
-
 
 trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
 
@@ -383,6 +390,89 @@ map
 
 
 
+## Model Discussion
+
+What is the probability of a hispanic in North Carolina being represented by a Democrat in the US House of Representatives? What about a Republican? Newly released congressional redistricting, likely to be challenged in court, along with recently available 2020 demographic data provides an opportunity to delve deeper. 
+
+First, we need to get the data. We're talking about the entire state, so the data is going to be large if we do anything more granular than census block group. Maybe even the tract will be good enough for now.
+
+
+We need to start with getting the 2020 hispanic data for the entire state, what are the totals for each county, how has that changed from 2010.
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+NC_Hisp_2020 <- get_decennial(
+  geography="county",
+  variables="P2_002N",
+  summary_var="P2_001N",
+  state="NC",
+   year=2020,
+  geometry=TRUE
+) %>% 
+  mutate(pct_hispanic=100*(value/summary_value),
+         new_Name = sub(" County, North Carolina", "", NAME),
+         Year=2020)
+
+top_ten_2020 <- NC_Hisp_2020 %>%
+  group_by(new_Name) %>%
+  st_drop_geometry %>%
+  summarize(Tot_Hisp = value,
+            Hisp_Share = pct_hispanic) %>%
+  arrange(desc(Tot_Hisp)) %>%
+  mutate(Year='2020')
+
+
+
+
+
+NC_Hisp_2010 <- get_decennial(
+  geography="county",
+  variables="P004003",
+  summary_var="P004001",
+  state="NC",
+  year=2010,
+  geometry=TRUE
+) %>% 
+   mutate(pct_hispanic=100*(value/summary_value),
+         new_Name = sub(" County, North Carolina", "", NAME),
+         Year=2010)
+
+
+top_ten_2010 <- NC_Hisp_2010 %>%
+  group_by(new_Name) %>%
+  st_drop_geometry %>%
+  summarize(Tot_Hisp = value,
+            Hisp_Share = pct_hispanic) %>%
+  arrange(desc(Tot_Hisp)) %>%
+  mutate(Year='2010')
+
+
+
+sample_counties <- top_ten_2020$new_Name[1:15]
+
+
+combined <- rbind(top_ten_2020, top_ten_2010) 
+
+
+temp<- combined %>%
+  filter(new_Name %in% sample_counties)
+
+arrange(temp, -Tot_Hisp)
+
+#temp <- temp[1:30,]
+
+
+p<-ggplot(data=temp, aes(x=(reorder(new_Name, Tot_Hisp)), y=Tot_Hisp, fill=Year)) +
+  geom_bar(stat="identity", position='dodge') 
+
+   
+# Horizontal bar plot
+p + coord_flip() +ylab("Total Hispanic Population") +xlab("County")
+
+
+
+```
 
 
 
