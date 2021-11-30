@@ -54,14 +54,14 @@ vars_2019 <- load_variables(2019,"acs5", cache=TRUE)
 
 ```
  
-Just how much has Durham changed demographically in the last ten years? 
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
 durham_hispanic_2020 <- get_decennial(
-  geography="block",
+  geography="tract",
   variables="P2_002N",
   summary_var="P2_001N",
   state="NC",
@@ -72,7 +72,7 @@ durham_hispanic_2020 <- get_decennial(
   mutate(pct_hispanic=100*(value/summary_value))
 
 durham_hispanic_2010 <- get_decennial(
-  geography="block",
+  geography="tract",
   variables="P004003",
   summary_var="P004001",
   state="NC",
@@ -88,7 +88,7 @@ durham_hispanic_2010 <- get_decennial(
 ```
 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 library(scales)
 library(leaflet)
 
@@ -135,7 +135,7 @@ map
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 counties <- c("Durham", "Orange", "Wake")
 
 three_2020 <- get_decennial(
@@ -177,7 +177,7 @@ three_2010 <- get_decennial(
 ```
 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
 
 pal <- colorNumeric(
@@ -216,17 +216,6 @@ map <- leaflet() %>%
 map
 
 ```
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -426,10 +415,11 @@ top_ten_2020 <- NC_Hisp_2020 %>%
   summarize(Tot_Hisp = value,
             Hisp_Share = pct_hispanic) %>%
   arrange(desc(Tot_Hisp)) %>%
+  adorn_totals('row') %>%
   mutate(Year='2020')
 
 
-
+arrange(top_ten_2020, -Tot_Hisp)
 
 
 NC_Hisp_2010 <- get_decennial(
@@ -443,6 +433,7 @@ NC_Hisp_2010 <- get_decennial(
    mutate(pct_hispanic=100*(value/summary_value),
          new_Name = sub(" County, North Carolina", "", NAME),
          Year=2010)
+library(janitor)
 
 
 top_ten_2010 <- NC_Hisp_2010 %>%
@@ -451,11 +442,16 @@ top_ten_2010 <- NC_Hisp_2010 %>%
   summarize(Tot_Hisp = value,
             Hisp_Share = pct_hispanic) %>%
   arrange(desc(Tot_Hisp)) %>%
-  mutate(Year='2010')
+  adorn_totals('row')%>%
+  mutate(Year='2010') 
+  
 
+arrange(top_ten_2010, -Tot_Hisp)
 
 
 sample_counties <- top_ten_2020$new_Name[1:15]
+
+sample_counties <-append(sample_counties, "Total")
 
 
 combined <- rbind(top_ten_2020, top_ten_2010) 
@@ -466,16 +462,17 @@ temp<- combined %>%
 
 arrange(temp, -Tot_Hisp)
 
-#temp <- temp[1:30,]
 
+library(plotly)
 
 p<-ggplot(data=temp, aes(x=(reorder(new_Name, Tot_Hisp)), y=Tot_Hisp, fill=Year)) +
   geom_bar(stat="identity", position='dodge') 
 
-   
+options(scipen=5)
 # Horizontal bar plot
-p + coord_flip() +ylab("Total Hispanic Population") +xlab("County")
+p <- p + coord_flip() +ylab("Total Hispanic Population") +xlab("County") + ggtitle("Hispanic Population Growth in North Carolina, 2010-2020")
 
+ggplotly(p) 
 
 
 ```
@@ -486,7 +483,7 @@ Take 2020 North Carolina Map by Census Tract, need to tag it to 2019 Congression
 ## 2019 Model
 
 
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
 NC_Hisp_2020_bg <- get_decennial(
@@ -572,7 +569,7 @@ summary(model)
 ```
 
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 train <- centroids[1:5333,]
 test <- centroids[5334:7111,]
 
@@ -598,7 +595,7 @@ mean(y_pred == y_act, na.rm=T)
 
 ## 2021 Model
 
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
 
@@ -621,7 +618,7 @@ summary(model)
 ```
 
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 train <- centroids[1:5333,]
 test <- centroids[5334:7111,]
 
@@ -642,7 +639,6 @@ mean(y_pred == y_act, na.rm=T)
 
 
 ```
-
 
 
 
