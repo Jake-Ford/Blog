@@ -396,7 +396,7 @@ We need to start with getting the 2020 hispanic data for the entire state, what 
 
 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 NC_Hisp_2020 <- get_decennial(
   geography="county",
   variables="P2_002N",
@@ -463,6 +463,12 @@ temp<- combined %>%
 arrange(temp, -Tot_Hisp)
 
 
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
 library(plotly)
 
 p<-ggplot(data=temp, aes(x=(reorder(new_Name, Tot_Hisp)), y=Tot_Hisp, fill=Year)) +
@@ -474,20 +480,19 @@ p <- p + coord_flip() +ylab("Total Hispanic Population") +xlab("County") + ggtit
 
 ggplotly(p) 
 
-
 ```
 
 
 Take 2020 North Carolina Map by Census Tract, need to tag it to 2019 Congressional representation by party. 
 
-## 2019 Model
+## Model Deployment
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
 NC_Hisp_2020_bg <- get_decennial(
-  geography="block group",
+  geography="block",
   variables= "P2_002N",
   summary_var="P2_001N",
   state="NC",
@@ -503,7 +508,7 @@ NC_Hisp_2020_bg <- get_decennial(
 
 
 NC_HH_2020_bg <- get_decennial(
-  geography="block group",
+  geography="block",
   variables= "H1_003N",
   state="NC",
   year=2020,
@@ -515,7 +520,7 @@ NC_HH_2020_bg <- get_decennial(
 
 
 NC_white_2020_bg <- get_decennial(
-  geography="block group",
+  geography="block",
   variables= "P1_003N",
   summary_var="P2_001N",
   state="NC",
@@ -529,7 +534,7 @@ NC_white_2020_bg <- get_decennial(
 
 
 NC_black_2020_bg <- get_decennial(
-  geography="block group",
+  geography="block",
   variables= "P1_004N",
   summary_var="P2_001N",
   state="NC",
@@ -553,33 +558,38 @@ temp <- st_transform(final_bgs, st_crs(nc_congressional_2019)) %>% st_make_valid
 
 centroids <- temp %>%
  st_point_on_surface() %>%
-  st_join(nc_congressional_2019 %>% select(sParty)) %>%
-  mutate(Party = case_when(
+  st_join(nc_congressional_2019 %>% select(sParty),st_nn, k = 1, maxdist=500) %>%
+  st_join(nc_congressional_2021 %>% select(Pred_Party) ,st_nn, k = 1, maxdist=500) %>%
+  mutate(Party_2019 = case_when(
     sParty == "Democrat" ~ 1,
     sParty=="Republican" ~ -0
-  ))
+  ),
+  Party_2021=Pred_Party)
+
+
+
+
+##Train and Test Data Sets
+
+train <- centroids[1:round(0.75*nrow(centroids),0),]
+test <- centroids[round(0.75*nrow(centroids),0)+1:nrow(centroids),]
 
 ## Build Logit model based off of centroids database, with sParty as the dummy variable, pctHispanic as the IV
 
-model <- glm(Party ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=centroids)
+model_2019 <- glm(Party_2019 ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=centroids)
 
-summary(model)
-
-
-```
+summary(model_2019)
 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-train <- centroids[1:5333,]
-test <- centroids[5334:7111,]
+
+model_2021 <- glm(Party_2021 ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=centroids)
+
+summary(model_2021)
 
 
-model <- glm(Party ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=centroids)
+## Predictive Fits
 
-summary(model)
-
-
-pred <- predict(model, newdata = test, type = "response")
+pred <- predict(model_2019, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
@@ -589,60 +599,101 @@ mean(y_pred == y_act, na.rm=T)
 
 
 
-```
-
-
-
-## 2021 Model
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-
-
-
-
-final_bgs <- st_transform(final_bgs, st_crs(nc_congressional_2021)) %>% st_make_valid()
-
-## Tag the block groups, exported as centroids, to the congressional district
-
-centroids <- final_bgs %>%
- st_point_on_surface() %>%
-  st_join(nc_congressional_2021 %>% select(Pred_Party)) 
-
-## Build Logit model based off of centroids database, with sParty as the dummy variable, pctHispanic as the IV
-
-model <- glm(Pred_Party ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=centroids)
-
-summary(model)
-
-
-```
-
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-train <- centroids[1:5333,]
-test <- centroids[5334:7111,]
-
-
-model <- glm(Pred_Party ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=centroids)
-
-summary(model)
-
-
-pred <- predict(model, newdata = test, type = "response")
+pred <- predict(model_2021, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$Pred_Party
+y_act <- test$Party
 
 mean(y_pred == y_act, na.rm=T) 
 
 
 
+
 ```
 
 
 
 
+
+
+
+## Odds Ratios
+
+```{r}
+exp(coef(model_2019))
+exp(coef(model_2021))
+
+exp(cbind(OR = coef(model_2019), confint(model_2019)))
+exp(cbind(OR = coef(model_2021), confint(model_2021)))
+
+
+
+```
+
+
+## Predicted Probabilities
+
+
+```{r}
+
+newdata1 <- with(centroids, data.frame(#pct_hispanic = mean(pct_hispanic,na.rm=T),
+                                        pct_black = mean(pct_black,na.rm=T),
+                                        pct_white = mean(pct_white,na.rm=T),
+                                        HH_Vacant = mean(HH_Vacant, na.rm=T),
+                                        rank = factor(1:4),
+                                       hispanic_rank = NA))
+
+newdata1$hispanic_rank[1] <- quantile(centroids$pct_hispanic, 0.25, na.rm=T)
+newdata1$hispanic_rank[2] <- quantile(centroids$pct_hispanic, 0.5, na.rm=T)
+newdata1$hispanic_rank[3] <- quantile(centroids$pct_hispanic, 0.75, na.rm=T)
+newdata1$hispanic_rank[4] <- quantile(centroids$pct_hispanic, 1, na.rm=T)
+
+
+
+
+
+newdata1$rankP <- predict(model_2021, newdata = newdata1, type = "response")
+newdata1
+
+
+
+```
+
+
+
+
+
+
+
+```{r}
+
+predicted <- predict(model_2021, test, type="response") 
+
+library(InformationValue)
+
+
+optCutOff <- optimalCutoff(test$Party, predicted)[1] 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## References
+
+1. https://stats.idre.ucla.edu/r/dae/logit-regression/
+
+2. http://r-statistics.co/Logistic-Regression-With-R.html 
 
 
 
