@@ -327,6 +327,84 @@ Summarize black and hispanic representation
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
+NC_Hisp_2020_bg <- get_decennial(
+  geography="block",
+  variables= "P2_002N",
+  summary_var="P2_001N",
+  state="NC",
+  year=2020,
+  geometry=TRUE,
+  #county="Durham"
+)  %>%
+   mutate(pct_hispanic=100*(value/summary_value),
+         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+         Year=2020,
+         GeoID = GEOID,
+         Name = NAME)
+
+
+NC_Asian_2020_bg <- get_decennial(
+  geography="block",
+  variables= "P1_006N",
+  summary_var="P1_001N",
+  state="NC",
+  year=2020,
+  geometry=TRUE,
+  #county="Durham"
+)  %>%
+   mutate(pct_asian=100*(value/summary_value),
+         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+         Year=2020,
+         GeoID = GEOID,
+         Name = NAME)
+
+
+NC_HH_2020_bg <- get_decennial(
+  geography="block",
+  variables= "H1_003N",
+  state="NC",
+  year=2020,
+  geometry=TRUE,
+  #county="Durham"
+)  %>%
+   mutate(new_Name = sub(" County, Nsorth Carolina", "", NAME),
+         Year=2020, HH_Vacant = value) 
+
+
+NC_white_2020_bg <- get_decennial(
+  geography="block",
+  variables= "P1_003N",
+  summary_var="P2_001N",
+  state="NC",
+  year=2020,
+  geometry=TRUE,
+  #county="Durham"
+)  %>%
+   mutate(pct_white=100*(value/summary_value),
+         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+         Year=2020) 
+
+
+NC_black_2020_bg <- get_decennial(
+  geography="block",
+  variables= "P1_004N",
+  summary_var="P2_001N",
+  state="NC",
+  year=2020,
+  geometry=TRUE,
+  #county="Durham"
+)  %>%
+   mutate(pct_black=100*(value/summary_value),
+         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+         Year=2020) 
+
+
+final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg,NC_Asian_2020_bg ) %>%
+  select(GeoID, Name, pct_black, pct_hispanic, pct_white, pct_asian, HH_Vacant, geometry) %>%
+  mutate(pct_other = 100 - (pct_black + pct_white + pct_asian))
+
+
+
 hispanic_2020 <- get_decennial(
   geography="tract",
   variables="P2_002N",
@@ -378,6 +456,13 @@ map <- leaflet(temp) %>%
                        
 map
 
+
+```
+
+
+
+
+```{r}
 
 ```
 
@@ -491,82 +576,27 @@ Take 2020 North Carolina Map by Census Tract, need to tag it to 2019 Congression
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
-NC_Hisp_2020_bg <- get_decennial(
-  geography="block",
-  variables= "P2_002N",
-  summary_var="P2_001N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(pct_hispanic=100*(value/summary_value),
-         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020,
-         GeoID = GEOID,
-         Name = NAME)
-
-
-NC_HH_2020_bg <- get_decennial(
-  geography="block",
-  variables= "H1_003N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020, HH_Vacant = value) 
-
-
-NC_white_2020_bg <- get_decennial(
-  geography="block",
-  variables= "P1_003N",
-  summary_var="P2_001N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(pct_white=100*(value/summary_value),
-         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020) 
-
-
-NC_black_2020_bg <- get_decennial(
-  geography="block",
-  variables= "P1_004N",
-  summary_var="P2_001N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(pct_black=100*(value/summary_value),
-         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020) 
-
-
-final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg ) %>%
-  select(GeoID, Name, pct_black, pct_hispanic, pct_white, HH_Vacant, geometry)
 
 
 
 temp <- st_transform(final_bgs, st_crs(nc_congressional_2019)) %>% st_make_valid()
 
-## Tag the block groups, exported as centroids, to the congressional district
+
+## Tag the block level exported as centroids, to the congressional district; note this takes approximately 4-6 hours
 
 centroids <- temp %>%
  st_point_on_surface() %>%
   st_join(nc_congressional_2019 %>% select(sParty),st_nn, k = 1, maxdist=500) %>%
-  st_join(nc_congressional_2021 %>% select(Pred_Party) ,st_nn, k = 1, maxdist=500) %>%
   mutate(Party_2019 = case_when(
     sParty == "Democrat" ~ 1,
     sParty=="Republican" ~ -0
-  ),
-  Party_2021=Pred_Party)
+  ))
 
+temp <- st_transform(final_bgs, st_crs(nc_congressional_2021)) %>% st_make_valid()
 
+centroids <- centroids %>%
+  st_join(nc_congressional_2021 %>% select(Pred_Party) ,st_nn, k = 1, maxdist=500) %>%
+  mutate(Party_2021=Pred_Party)
 
 
 ##Train and Test Data Sets
@@ -576,9 +606,9 @@ test <- centroids[round(0.75*nrow(centroids),0)+1:nrow(centroids),]
 
 ## Build Logit model based off of centroids database, with sParty as the dummy variable, pctHispanic as the IV
 
-model_2019 <- glm(Party_2019 ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=centroids)
+model_2019_blocks <- glm(Party_2019 ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=ex)
 
-summary(model_2019)
+summary(model_2019_blocks)
 
 
 
@@ -589,7 +619,7 @@ summary(model_2021)
 
 ## Predictive Fits
 
-pred <- predict(model_2019, newdata = test, type = "response")
+pred <- predict(model_2019_blocks, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
@@ -624,7 +654,7 @@ mean(y_pred == y_act, na.rm=T)
 exp(coef(model_2019))
 exp(coef(model_2021))
 
-exp(cbind(OR = coef(model_2019), confint(model_2019)))
+exp(cbind(OR = coef(model_2019_blocks), confint(model_2019_blocks)))
 exp(cbind(OR = coef(model_2021), confint(model_2021)))
 
 
@@ -637,7 +667,7 @@ exp(cbind(OR = coef(model_2021), confint(model_2021)))
 
 ```{r}
 
-newdata1 <- with(centroids, data.frame(#pct_hispanic = mean(pct_hispanic,na.rm=T),
+newdata1 <- with(ex, data.frame(#pct_hispanic = mean(pct_hispanic,na.rm=T),
                                         pct_black = mean(pct_black,na.rm=T),
                                         pct_white = mean(pct_white,na.rm=T),
                                         HH_Vacant = mean(HH_Vacant, na.rm=T),
@@ -653,7 +683,7 @@ newdata1$hispanic_rank[4] <- quantile(centroids$pct_hispanic, 1, na.rm=T)
 
 
 
-newdata1$rankP <- predict(model_2021, newdata = newdata1, type = "response")
+newdata1$rankP <- predict(model_2019_blocks, newdata = newdata1, type = "response")
 newdata1
 
 
@@ -668,13 +698,59 @@ newdata1
 
 ```{r}
 
-predicted <- predict(model_2021, test, type="response") 
+predicted <- predict(model_2019_blocks, test, type="response") 
 
 library(InformationValue)
 
 
 optCutOff <- optimalCutoff(test$Party, predicted)[1] 
 ```
+
+
+
+
+## redist 
+
+
+
+
+
+```{r}
+library(redist)
+library(dplyr)
+
+data(iowa)
+
+iowa_map = redist_map(northcarolina, existing_plan=cd_2010, pop_tol=0.0001, total_pop = pop)
+
+
+iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
+
+
+library(ggplot2)
+library(patchwork) # for plotting
+
+redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"),geom=iowa_map)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -694,6 +770,8 @@ optCutOff <- optimalCutoff(test$Party, predicted)[1]
 1. https://stats.idre.ucla.edu/r/dae/logit-regression/
 
 2. http://r-statistics.co/Logistic-Regression-With-R.html 
+
+3. https://github.com/alarm-redist/redist/
 
 
 
