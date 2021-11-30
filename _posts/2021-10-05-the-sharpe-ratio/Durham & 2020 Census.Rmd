@@ -34,6 +34,7 @@ options(tigris_use_cache = TRUE)
 library(sf)
 library(data.table)
 library(dplyr)
+library(plotly)
 
 # remotes::install_github("walkerke/tidycensus")
 # remotes::install_github("walkerke/tigris")
@@ -88,137 +89,6 @@ durham_hispanic_2010 <- get_decennial(
 ```
 
 
-```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-library(scales)
-library(leaflet)
-
-pal <- colorNumeric(
-  palette = "YlOrRd", na.color = "#808080",
-  domain = durham_hispanic_2010$pct_hispanic)
-
-
-map <- leaflet() %>%
-  addProviderTiles("CartoDB.Positron") %>%
-  ##Hispanics
-  addPolygons(data=durham_hispanic_2010,
-              fillColor=~pal(pct_hispanic),
-              stroke=FALSE, weight=2,fillOpacity = 0.7,
-              popup = paste("GEOID: ", durham_hispanic_2010$GEOID , "<br>",
-                            "Pct Hispanic: ", durham_hispanic_2010$pct_hispanic
-                            ), 
-              label="Hispanic 2010",
-            group="Hispanic 2010") %>%
-
-  
-    addPolygons(data=durham_hispanic_2020,
-              fillColor=~pal(pct_hispanic),
-              stroke=FALSE, weight=2,fillOpacity = 0.7,
-              popup = paste("GEOID: ", durham_hispanic_2020$GEOID , "<br>",
-                            "Pct Hispanic: ", durham_hispanic_2020$pct_hispanic
-                            ), 
-              label="Hispanic 2020",
-            group="Hispanic 2020") %>%
-  addLegend("bottomright",
-            pal=pal,
-            value=durham_hispanic_2020$pct_hispanic,
-            title="Percent Hispanic") %>%
-  
-  
-    addLayersControl(baseGroups = c("Hispanic 2020", "Hispanic 2010"))
-
-map
-
-```
-
-
-
-
-
-
-```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-counties <- c("Durham", "Orange", "Wake")
-
-three_2020 <- get_decennial(
-  geography="tract",
-  variables="P2_002N",
-  summary_var="P2_001N",
-  state="NC",
-  county=counties,
-  year=2020,
-  geometry=TRUE
-) %>% 
-  mutate(pct_hispanic=100*(value/summary_value))
-
-three_2010 <- get_decennial(
-  geography="tract",
-  variables="P004003",
-  summary_var="P004001",
-  state="NC",
-  county=counties,
-  year=2010,
-  geometry=TRUE
-) %>% 
-  mutate(pct_hispanic=100*(value/summary_value))
-# 
-# three_2019 <- get_acs(
-#   geography="block group",
-#   variables="B03001_003",
-#   summary_var="B03001_001",
-#   state="NC",
-#   county=counties,
-#   year=2019,
-#   geometry=TRUE
-# ) %>% 
-#   mutate(pct_hispanic=100*(value/summary_value))
-
-
-
-
-```
-
-
-```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-
-
-pal <- colorNumeric(
-  palette = "YlOrRd", na.color = "#808080",
-  domain = three_2010$pct_hispanic)
-
-
-map <- leaflet() %>%
-  addProviderTiles("CartoDB.Positron") %>%
-  ##Hispanics
-  addPolygons(data=three_2010,
-              fillColor=~pal(pct_hispanic),
-              stroke=FALSE, weight=2,fillOpacity = 0.7,
-              popup = paste("GEOID: ", three_2010$GEOID , "<br>",
-                            "Pct Hispanic: ", three_2010$pct_hispanic
-                            ), 
-              label="Hispanic 2010",
-            group="Hispanic 2010") %>%
-
-    addPolygons(data=three_2020,
-              fillColor=~pal(pct_hispanic),
-              stroke=FALSE, weight=2,fillOpacity = 0.7,
-              popup = paste("GEOID: ", three_2020$GEOID , "<br>",
-                            "Pct Hispanic: ", three_2020$pct_hispanic
-                            ), 
-              label="Hispanic 2020",
-            group="Hispanic 2020") %>%
-  addLegend("bottomright",
-            pal=pal,
-            value=three_2020$pct_hispanic,
-            title="Percent Hispanic 2020") %>%
-  
-  
-    addLayersControl(baseGroups = c("Hispanic 2020", "Hispanic 2010"))
-
-map
-
-```
-
-
-
 
 
 
@@ -235,6 +105,8 @@ Steps:
 2. Compare each congressional district's demographic data to each other - not so much diving into packing vs cracking, but just higher level comparison's. 
 
 Let's load the 2019 Congressional District and take a look - what
+
+
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
@@ -265,6 +137,8 @@ nc_congressional_2021$Pred_Party <- case_when(
         nc_congressional_2021$Partisan_Lean > 0 ~ 1
          
 )
+
+#write_sf(nc_congressional_2021, "nc_congressional_2021_updated.shp")
 
 trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
 
@@ -403,6 +277,32 @@ final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_20
   select(GeoID, Name, pct_black, pct_hispanic, pct_white, pct_asian, HH_Vacant, geometry) %>%
   mutate(pct_other = 100 - (pct_black + pct_white + pct_asian))
 
+temp <- st_transform(final_bgs, st_crs(nc_congressional_2019)) %>% st_make_valid()
+
+
+## Tag the block level exported as centroids, to the congressional district; note this takes approximately 4-6 hours
+
+# centroids <- temp %>%
+#  st_point_on_surface() %>%
+#   st_join(nc_congressional_2019 %>% select(sParty),st_nn, k = 1, maxdist=500) %>%
+#   mutate(Party_2019 = case_when(
+#     sParty == "Democrat" ~ 1,
+#     sParty=="Republican" ~ -0
+#   ))
+
+
+# centroids <- centroids %>%
+#   st_join(nc_congressional_2021 %>% select(Pred_Party) ,st_nn, k = 1, maxdist=500) %>%
+#   mutate(Party_2021=Pred_Party)
+
+## Tagged the centroids in TransCAD, import back in - work smarter, not harder 
+
+centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp")
+centroids$PARTY_2019 <- centroids$SPARTY
+
+temp <- st_transform(final_bgs, st_crs(nc_congressional_2021)) %>% st_make_valid()
+
+
 
 
 hispanic_2020 <- get_decennial(
@@ -460,9 +360,57 @@ map
 ```
 
 
+### Total State by Race
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+state_2010 <- get_decennial(
+  geography="state",
+  variables=c(Hispanic="P004003",
+              White = "P003002",
+              Black = "P003003",
+              Asian= "P003005",
+              Total = "P004001"),
+  state="NC",
+  year=2010,
+  geometry=FALSE
+) %>% 
+  mutate(Year='2010')
 
 
-```{r}
+
+
+state_2020 <- get_decennial(
+  geography="state",
+  variables=c(Hispanic="P2_002N",
+              White = "P1_003N",
+              Black = "P1_004N",
+              Asian= "P1_006N",
+              Total = "P2_001N"),
+  state="NC",
+  year=2020,
+  geometry=FALSE
+) %>% 
+  mutate(Year = '2020')
+
+
+
+
+
+compare <- rbind(state_2010, state_2020) 
+
+
+
+library(plotly)
+
+p<-ggplot(data=compare, aes(x=(reorder(variable, value)), y=value, fill=Year)) +
+  geom_bar(stat="identity", position='dodge') 
+
+options(scipen=5)
+# Horizontal bar plot
+p <- p + coord_flip() +ylab("Total Population") +xlab("Race") + ggtitle("Total Population Growth by Race, 2010-2020") 
+ggplotly(p) 
+
 
 ```
 
@@ -470,18 +418,12 @@ map
 
 
 
-## Model Discussion
-
-What is the probability of a hispanic in North Carolina being represented by a Democrat in the US House of Representatives? What about a Republican? Newly released congressional redistricting, likely to be challenged in court, along with recently available 2020 demographic data provides an opportunity to delve deeper. 
-
-First, we need to get the data. We're talking about the entire state, so the data is going to be large if we do anything more granular than census block group. Maybe even the tract will be good enough for now.
-
-
-We need to start with getting the 2020 hispanic data for the entire state, what are the totals for each county, how has that changed from 2010.
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+### Hispanic Growth Top Counties
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 NC_Hisp_2020 <- get_decennial(
   geography="county",
   variables="P2_002N",
@@ -531,7 +473,7 @@ top_ten_2010 <- NC_Hisp_2010 %>%
   mutate(Year='2010') 
   
 
-arrange(top_ten_2010, -Tot_Hisp)
+
 
 
 sample_counties <- top_ten_2020$new_Name[1:15]
@@ -545,17 +487,6 @@ combined <- rbind(top_ten_2020, top_ten_2010)
 temp<- combined %>%
   filter(new_Name %in% sample_counties)
 
-arrange(temp, -Tot_Hisp)
-
-
-
-```
-
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-
-library(plotly)
-
 p<-ggplot(data=temp, aes(x=(reorder(new_Name, Tot_Hisp)), y=Tot_Hisp, fill=Year)) +
   geom_bar(stat="identity", position='dodge') 
 
@@ -565,10 +496,62 @@ p <- p + coord_flip() +ylab("Total Hispanic Population") +xlab("County") + ggtit
 
 ggplotly(p) 
 
+
+
 ```
 
 
+
+
 Take 2020 North Carolina Map by Census Tract, need to tag it to 2019 Congressional representation by party. 
+
+
+
+
+
+
+### Race by Representative
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+race_by_rep <- centroids %>%
+  st_drop_geometry() %>%
+  group_by(sParty) %>%
+  summarize(Mean_white = mean(pct_white, na.rm=T),
+            Mean_black = mean(pct_black, na.rm=T),
+            Mean_hispanic = mean(pct_hispanic, na.rm=T))
+           # Mean_asian = mean(pct_asian, na.rm=T))
+
+library(DT)
+
+datatable(race_by_rep, caption = "Average Racial Breakdown by 2019 Congressional Representation") %>%
+  formatRound('Mean_white', 3) %>%
+ formatRound('Mean_black', 3) %>%
+ formatRound('Mean_hispanic', 3) 
+```
+
+
+
+
+
+
+
+
+## Model Discussion
+
+What is the probability of a hispanic in North Carolina being represented by a Democrat in the US House of Representatives? What about a Republican? Newly released congressional redistricting, likely to be challenged in court, along with recently available 2020 demographic data provides an opportunity to delve deeper. 
+
+First, we need to get the data. We're talking about the entire state, so the data is going to be large if we do anything more granular than census block group. Maybe even the tract will be good enough for now.
+
+
+We need to start with getting the 2020 hispanic data for the entire state, what are the totals for each county, how has that changed from 2010.
+
+
+
+
+
+
+
+
 
 ## Model Deployment
 
