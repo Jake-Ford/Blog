@@ -513,7 +513,9 @@ Take 2020 North Carolina Map by Census Tract, need to tag it to 2019 Congression
 ### Race by Representative
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-race_by_rep <- centroids %>%
+
+## 2019 
+temp <- centroids %>%
   st_drop_geometry() %>%
   group_by(sParty) %>%
   summarize(Mean_white = mean(pct_white, na.rm=T),
@@ -523,7 +525,24 @@ race_by_rep <- centroids %>%
 
 library(DT)
 
-datatable(race_by_rep, caption = "Average Racial Breakdown by 2019 Congressional Representation") %>%
+datatable(temp, caption = "Average Racial Breakdown by 2019 Congressional Representation") %>%
+  formatRound('Mean_white', 3) %>%
+ formatRound('Mean_black', 3) %>%
+ formatRound('Mean_hispanic', 3) 
+
+## 2020
+
+temp <- centroids %>%
+  st_drop_geometry() %>%
+  group_by(PARTY_2021) %>%
+  summarize(Mean_white = mean(pct_white, na.rm=T),
+            Mean_black = mean(pct_black, na.rm=T),
+            Mean_hispanic = mean(pct_hispanic, na.rm=T))
+           # Mean_asian = mean(pct_asian, na.rm=T))
+
+library(DT)
+
+datatable(temp, caption = "Average Racial Breakdown by 2021 Congressional Representation") %>%
   formatRound('Mean_white', 3) %>%
  formatRound('Mean_black', 3) %>%
  formatRound('Mean_hispanic', 3) 
