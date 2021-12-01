@@ -1,11 +1,11 @@
 ---
-title: "Demographic Change in Durham last 10 years"
+title: "North Carolina Redistricting and Demographic Changes"
 description: |
-  2020 Census results in Durham.
+  2020 Census Data vs Newly Drawn Districts
 author:
   - name: Jacob Ford
     url: https://example.com/norajones
-date: 10-05-2021
+date: 12-01-2021
 output:
   distill::distill_article:
     self_contained: false
@@ -52,63 +52,6 @@ vars_2019 <- load_variables(2019,"acs5", cache=TRUE)
 
 ## Black (black alone) 	P003003 in 2010 P1_004N in 2020
 
-
-```
- 
-
-
-
-
-```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-
-durham_hispanic_2020 <- get_decennial(
-  geography="tract",
-  variables="P2_002N",
-  summary_var="P2_001N",
-  state="NC",
-  county="Durham",
-  year=2020,
-  geometry=TRUE
-) %>% 
-  mutate(pct_hispanic=100*(value/summary_value))
-
-durham_hispanic_2010 <- get_decennial(
-  geography="tract",
-  variables="P004003",
-  summary_var="P004001",
-  state="NC",
-  county="Durham",
-  year=2010,
-  geometry=TRUE
-) %>% 
-  mutate(pct_hispanic=100*(value/summary_value))
-
-
- 
-
-```
-
-
-
-
-
-
-
-
-2020 census data is available at the block level, allowing us to see the concentration of population by race and age - and how those have changed since 2010. 
-
-The goal of this blog will be to analyze how each congresssional district measures up to each other in demographic representation. Has Asheville's 11th become more or less white since 2010? Where are Hispanics, a growing percentage of 
-
-Steps:
-
-1. Overall compare 2010 to 2020 - how many more people, HH's, white-only, black and hispanics since 2010? 
-2. Compare each congressional district's demographic data to each other - not so much diving into packing vs cracking, but just higher level comparison's. 
-
-Let's load the 2019 Congressional District and take a look - what
-
-
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
 nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
 nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
 
@@ -140,7 +83,40 @@ nc_congressional_2021$Pred_Party <- case_when(
 
 #write_sf(nc_congressional_2021, "nc_congressional_2021_updated.shp")
 
-trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
+
+
+```
+ 
+
+
+
+
+The long awaited 2020 Census data provides the best estimate of the distribution of population changes by racial composition, available from state to census block geographies. Coinciding with the constitutionally required release is the redistricting process for state legislatures and congressional districts. I live in Durham (called by many to be the Mecca of the South) in a state where unfettered partisan gerrymandering brazenly strikes advantages for the party in power, right now Republicans in the General Assembly. Plenty of astounding work by mathematicians like of Dr Moon Duchin at Tufts and Dr Jonathan Mattingly at Duke are providing policymakers and engaged citizens with quantifiable tools to measure the consquences of the players making up their own rules, of the politicians drawing their own lines. This ain't that. 
+
+In this, I use geospatial analysesof the newly released census data, using the smallest level geographic unit (census block y'all), to determine how the newly proposed 2021-2030 lines in the Tar Heel State interact with demographic shifts. Mainly, we'll be looking at racial composition and the party each block is represented by in US House of Representatives, and if I remember, the NC General Assembly. Given the large number of blocks in NC (236,638), a simplified ML logit model is deployed and given ample training data for boosting. The question(s) I'm looking to answer:
+
+1. How has NC demographically over last ten years? (hint: a lot)
+2. What demographics are most represented by either major political party? 
+3. Did redistricting cause any particular racial group to increase likelihood of being represented by a particular party?
+4. Why hasn't Mayor-soon-to-be-elect Elaine O'Neil formally changed the name to 'Mecca of the South' yet?  
+
+Disclaimer: This is just an exploratory analysis and model. The model will be described in the below section, which I'm sure could be improved upon or entirely redesigned. But the richness of the data and the shift in representative districts is the important piece to focus on. 
+
+
+
+## I choose you (gerry)-mander! 
+
+For those who got the joke, thanks for growing up in the 1990's. 
+
+In the below map, you'll find both sets of US House district lines, what I'll call the 2019 and the 2021. The 2019 districts are shaded by party. The 2021 are shaded by FiveThirtyEight's [Partisan Lean](https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/) for North Carolina's new districts. Note: these lines are facing legal challenges, but so far have survived the gauntlet. 
+
+For the model preparation, I assume the predictions by *heads bow* Nate Silver and his team of god-fearing data wonks hold true, meaning the 2022 midterm elections follow the partisan lean exactly. This may likely be generous for Democrats, as the newly drawn 2nd District, where my own represenative in Congress GK Butterfield leaves a vacant seat, is just slightly in their favor at +1 D's. 
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
 
 
 congress_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
@@ -197,7 +173,7 @@ map
 
 
 
-# EDA
+## EDA
 
 Summarize black and hispanic representation
 
@@ -653,7 +629,7 @@ top_ten_2020_asian <- NC_Asian_2020 %>%
   mutate(Year='2020')
 
 
-top_ten_2010_asian <- NC_Asian_2010 %>%
+top_ten_2010_asian <- NC_Asian_2010 %>% 
   group_by(new_Name) %>%
  # st_drop_geometry %>%
   summarize(Tot_Asian = value,
