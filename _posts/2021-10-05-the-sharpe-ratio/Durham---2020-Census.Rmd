@@ -330,10 +330,9 @@ map
 
 ```
 
+Let's zoom out. From 2010 to 2020, North Carolina gained just over 900,000, making it one of six states to gain an additional seat (shout out Montana, Oregon, Colorado, Florida).
 
-
-
-
+But the below graph shows a bit more to the story. The Black population stayed relatively constant, while Whites actually decreased. But more surprisingly, Hispanic and Asian populations dramatically increased relative to 2010 values. While only accounting for over 10% of total population, Hispanic growth accounted for a third of the total state population growth that netted an additional seat in the US House. 
 
 
 
@@ -401,6 +400,8 @@ ggplotly(p)
 
 ### Hispanic & Asian Growth Top Counties
 
+The next graphs show which counties hold most of the Hispanic and Asian growth in North Carolina. Mecklenberg (Charlotte) and Wake (Raleigh and Cary) Counties are the heavy hitters. 
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
@@ -426,7 +427,7 @@ top_ten_2020_hisp <- NC_Hisp_2020 %>%
   summarize(Tot_Hisp = value,
             Hisp_Share = pct_hispanic) %>%
   arrange(desc(Tot_Hisp)) %>%
-  adorn_totals('row') %>%
+  #adorn_totals('row') %>%
   mutate(Year='2020')
 
 
@@ -452,7 +453,7 @@ top_ten_2010_hisp <- NC_Hisp_2010 %>%
   summarize(Tot_Hisp = value,
             Hisp_Share = pct_hispanic) %>%
   arrange(desc(Tot_Hisp)) %>%
-  adorn_totals('row')%>%
+ # adorn_totals('row')%>%
   mutate(Year='2010') 
   
 
@@ -518,7 +519,7 @@ top_ten_2020_asian <- NC_Asian_2020 %>%
   summarize(Tot_Asian = value,
             Asian_Share = pct_asian) %>%
   arrange(desc(Tot_Asian)) %>%
-  adorn_totals('row') %>%
+ # adorn_totals('row') %>%
   mutate(Year='2020')
 
 
@@ -528,7 +529,7 @@ top_ten_2010_asian <- NC_Asian_2010 %>%
   summarize(Tot_Asian = value,
             Asian_Share = pct_asian) %>%
   arrange(desc(Tot_Asian)) %>%
-  adorn_totals('row')%>%
+ # adorn_totals('row')%>%
   mutate(Year='2010') 
 
 combined <- rbind(top_ten_2020_asian, top_ten_2010_asian) 
@@ -550,14 +551,6 @@ ggplotly(p)
 
 
 ```
-
-
-```{r}
-ggplot() + geom_sf(data=centroids[centroids$PARTY_2019==1], color="red", fill=NA)#+geom_sf(data = nc_3857, colour = "red", fill = NA)+theme_void()
-```
-
-
-
 
 
 
@@ -609,7 +602,7 @@ p<-ggplot(data=temp, aes(x=(reorder(new_Name, Hisp_Share)), y=Hisp_Share, fill=Y
 
 options(scipen=5)
 # Horizontal bar plot
-p <- p + coord_flip() +ylab("Hispanic % of County Population") +xlab("County") + ggtitle("Hispanic % in North Carolina, 2010-2020")
+p <- p + coord_flip() +ylab("Hispanic % of Total Population") +xlab("County") + ggtitle("Hispanic Proportional Total, 2010-2020")
 
 ggplotly(p) 
 
@@ -652,7 +645,7 @@ p<-ggplot(data=temp, aes(x=(reorder(new_Name, Asian_Share)), y=Asian_Share, fill
 
 options(scipen=5)
 # Horizontal bar plot
-p <- p + coord_flip() +ylab("Total Asian Population") +xlab("County") + ggtitle("Asian Population Growth in North Carolina, 2010-2020")
+p <- p + coord_flip() +ylab("Asian % of Total Population") +xlab("County") + ggtitle("Asian Proportional Total, 2010-2020")
 
 ggplotly(p) 
 
@@ -665,11 +658,152 @@ ggplotly(p)
 
 
 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+nc_2010 <- get_decennial(
+  geography="county",
+  variables=c(Hispanic="P004003",
+              White = "P003002",
+              Black = "P003003",
+              Asian= "P003005",
+              Total = "P004001"),
+  state="NC",
+  year=2010,
+  geometry=TRUE
+) %>% 
+  mutate(Year='2010',
+        County_Name = sub(" County, North Carolina", "", NAME)) %>%
+  group_by(County_Name) %>%
+  summarize(Hispanic_2010 = value[variable=="Hispanic"],
+            White_2010 = value[variable=="White"],
+            Black_2010 = value[variable=="Black"],
+            Asian_2010 = value[variable=="Asian"],
+            Total_2010 = value[variable=="Total"]) %>%
+  st_drop_geometry()
 
 
 
 
-Take 2020 North Carolina Map by Census Tract, need to tag it to 2019 Congressional representation by party. 
+nc_2020 <- get_decennial(
+  geography="county",
+  variables=c(Hispanic="P2_002N",
+              White = "P1_003N",
+              Black = "P1_004N",
+              Asian= "P1_006N",
+              Total = "P2_001N"),
+  state="NC",
+  year=2020,
+  geometry=TRUE
+) %>% 
+  mutate(Year = '2020',
+        County_Name = sub(" County, North Carolina", "", NAME)) %>%
+  group_by(County_Name) %>%
+  summarize(Hispanic_2020 = value[variable=="Hispanic"],
+            White_2020 = value[variable=="White"],
+            Black_2020 = value[variable=="Black"],
+            Asian_2020 = value[variable=="Asian"],
+            Total_2020 = value[variable=="Total"])%>%
+  st_drop_geometry()
+
+
+combined <- cbind(nc_2010, nc_2020)
+
+combined$White_Diff <- combined$White_2020-combined$White_2010
+combined$Hisp_Diff <- combined$Hispanic_2020-combined$Hispanic_2010
+combined$Black_Diff <- combined$Black_2020-combined$Black_2010
+combined$Asian_Diff <- combined$Asian_2020-combined$Asian_2010
+combined$Total_Diff <- combined$Total_2020-combined$Total_2010
+
+combined <- combined [-1]
+
+combined <- combined %>%
+  select(County_Name, White_Diff, Hisp_Diff, Black_Diff, Asian_Diff, Total_Diff)
+
+
+## Grab blank Geo
+
+empty_geo <- get_decennial(
+  geography="county",
+  variables=c(test="P2_002N"),
+  state="NC",
+  year=2020,
+  geometry=TRUE
+) %>%
+  mutate(County_Name = sub(" County, North Carolina", "", NAME))
+
+temp <- merge(empty_geo, combined)
+
+
+
+
+rc1 <- colorRampPalette(colors = c("red", "white"), space = "Lab")(22152)
+rc2 <- colorRampPalette(colors = c("white", "darkgreen"), space = "Lab")(66000)
+rampcols <- c(rc1, rc2)
+
+pal_white20 <- colorNumeric(palette = rampcols, domain = temp$White_Diff)
+
+rc1 <- colorRampPalette(colors = c("red", "white"), space = "Lab")(6200)
+rc2 <- colorRampPalette(colors = c("white", "darkgreen"), space = "Lab")(47000)
+rampcols <- c(rc1, rc2)
+
+pal_black20 <- colorNumeric(palette = rampcols, domain = temp$Black_Diff)
+
+rc1 <- colorRampPalette(colors = c("red", "white"), space = "Lab")(1200)
+rc2 <- colorRampPalette(colors = c("white", "darkgreen"), space = "Lab")(57000)
+rampcols <- c(rc1, rc2)
+
+pal_hisp20 <- colorNumeric(palette = rampcols, domain = temp$Hisp_Diff)
+
+rc1 <- colorRampPalette(colors = c("red", "white"), space = "Lab")(85)
+rc2 <- colorRampPalette(colors = c("white", "darkgreen"), space = "Lab")(48000)
+rampcols <- c(rc1, rc2)
+
+pal_asian20 <- colorNumeric(palette = rampcols, domain = temp$Asian_Diff)
+
+rc1 <- colorRampPalette(colors = c("red", "white"), space = "Lab")(17000)
+rc2 <- colorRampPalette(colors = c("white", "darkgreen"), space = "Lab")(228000)
+rampcols <- c(rc1, rc2)
+
+pal_total <- colorNumeric(palette = rampcols, domain = temp$Total_Diff)
+
+
+
+
+county_map <- leaflet()  %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(data=temp, group="White",
+              popup=paste("County Name: ", temp$County_Name, "<br>",
+                          "White Difference: ", temp$White_Diff, "<br>"),
+              weight=2, fillOpacity=0.7, color=~pal_white20(White_Diff)) %>%
+  
+  addPolygons(data=temp, group="Black",
+              popup=paste("County Name: ", temp$County_Name, "<br>",
+                          "Black Difference: ", temp$Black_Diff, "<br>"),
+              weight=2, fillOpacity=0.7, color=~pal_black20(Black_Diff)) %>%
+  addPolygons(data=temp, group="Hispanic",
+              popup=paste("County Name: ", temp$County_Name, "<br>",
+                          "Hispanic Difference: ", temp$Hisp_Diff, "<br>"),
+              weight=2, fillOpacity=0.7, color=~pal_hisp20(Hisp_Diff)) %>%
+  
+  addPolygons(data=temp, group="Asian",
+              popup=paste("County Name: ", temp$County_Name, "<br>",
+                          "Asian Difference: ", temp$Asian_Diff, "<br>"),
+              weight=2, fillOpacity=0.7, color=~pal_asian20(Asian_Diff)) %>%
+  addPolygons(data=temp, group="Total",
+              popup=paste("County Name: ", temp$County_Name, "<br>",
+                          "Total Difference: ", temp$Total_Diff, "<br>"),
+              weight=2, fillOpacity=0.7, color=~pal_total(Total_Diff)) %>%
+  
+  
+  
+  addLayersControl(baseGroups = c("Black", "White","Asian", "Hispanic", "Total"))
+
+  
+county_map
+
+
+
+```
+
 
 
 
