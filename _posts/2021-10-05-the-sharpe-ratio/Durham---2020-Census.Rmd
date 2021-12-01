@@ -143,16 +143,16 @@ nc_congressional_2021$Pred_Party <- case_when(
 trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
 
 
-temp <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
+congress_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
 
 pal <- colorFactor(
   palette=c('blue','red'),
-  domain=temp$sParty
+  domain=congress_2019$sParty
 )
 
 
 
-temp_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
+congress_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
 
 library(RColorBrewer)
 
@@ -168,22 +168,24 @@ pal_2021 <- colorFactor(
 
 
 
-map <- leaflet(temp) %>%
+map <- leaflet(congress_2019) %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(data=temp, group="2019",
-              popup=paste("Congressional District: ", temp$District, "<br>",
-                          "Party: ", temp$sParty, "<br>",
-                          "Representative 2019: ", temp$sName),
+  addPolygons(data=congress_2019, group="2019",
+              popup=paste("Congressional District: ", congress_2019$District, "<br>",
+                          "Party: ", congress_2019$sParty, "<br>",
+                          "Representative 2019: ", congress_2019$sName),
               weight=1,
-              color =~pal(temp$sParty)) %>%
-  addPolygons(data=temp_2021, group="2021",
-              popup=paste("Congressional District: ", temp_2021$DISTRICT, "<br>", "Partisan Lean: ", temp_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(temp_2021$color),
+              color =~pal(congress_2019$sParty)) %>%
+  addPolygons(data=congress_2021, group="2021",
+              popup=paste("Congressional District: ", congress_2021$DISTRICT, "<br>", "Partisan Lean: ", congress_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(congress_2021$color),
               weight=1, fillOpacity =0.5) %>%
   
   addLayersControl(baseGroups = c("2019", "2021"))
 
-
 map
+
+
+
   
  
 
@@ -201,83 +203,83 @@ Summarize black and hispanic representation
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
-NC_Hisp_2020_bg <- get_decennial(
-  geography="block",
-  variables= "P2_002N",
-  summary_var="P2_001N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(pct_hispanic=100*(value/summary_value),
-         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020,
-         GeoID = GEOID,
-         Name = NAME)
-
-
-NC_Asian_2020_bg <- get_decennial(
-  geography="block",
-  variables= "P1_006N",
-  summary_var="P1_001N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(pct_asian=100*(value/summary_value),
-         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020,
-         GeoID = GEOID,
-         Name = NAME)
-
-
-NC_HH_2020_bg <- get_decennial(
-  geography="block",
-  variables= "H1_003N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020, HH_Vacant = value) 
-
-
-NC_white_2020_bg <- get_decennial(
-  geography="block",
-  variables= "P1_003N",
-  summary_var="P2_001N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(pct_white=100*(value/summary_value),
-         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020) 
-
-
-NC_black_2020_bg <- get_decennial(
-  geography="block",
-  variables= "P1_004N",
-  summary_var="P2_001N",
-  state="NC",
-  year=2020,
-  geometry=TRUE,
-  #county="Durham"
-)  %>%
-   mutate(pct_black=100*(value/summary_value),
-         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-         Year=2020) 
-
-
-final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg,NC_Asian_2020_bg ) %>%
-  select(GeoID, Name, pct_black, pct_hispanic, pct_white, pct_asian, HH_Vacant, geometry) %>%
-  mutate(pct_other = 100 - (pct_black + pct_white + pct_asian))
-
-temp <- st_transform(final_bgs, st_crs(nc_congressional_2019)) %>% st_make_valid()
+#NC_Hisp_2020_bg <- get_decennial(
+#  geography="block",
+#  variables= "P2_002N",
+#  summary_var="P2_001N",
+#  state="NC",
+#  year=2020,
+#  geometry=TRUE,
+#  #county="Durham"
+#)  %>%
+#   mutate(pct_hispanic=100*(value/summary_value),
+#         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+#         Year=2020,
+#         GeoID = GEOID,
+#         Name = NAME)
+#
+#
+#NC_Asian_2020_bg <- get_decennial(
+#  geography="block",
+#  variables= "P1_006N",
+#  summary_var="P1_001N",
+#  state="NC",
+#  year=2020,
+#  geometry=TRUE,
+#  #county="Durham"
+#)  %>%
+#   mutate(pct_asian=100*(value/summary_value),
+#         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+#         Year=2020,
+#         GeoID = GEOID,
+#         Name = NAME)
+#
+#
+#NC_HH_2020_bg <- get_decennial(
+#  geography="block",
+#  variables= "H1_003N",
+#  state="NC",
+#  year=2020,
+#  geometry=TRUE,
+#  #county="Durham"
+#)  %>%
+#   mutate(new_Name = sub(" County, Nsorth Carolina", "", NAME),
+#         Year=2020, HH_Vacant = value) 
+#
+#
+#NC_white_2020_bg <- get_decennial(
+#  geography="block",
+#  variables= "P1_003N",
+#  summary_var="P2_001N",
+#  state="NC",
+#  year=2020,
+#  geometry=TRUE,
+#  #county="Durham"
+#)  %>%
+#   mutate(pct_white=100*(value/summary_value),
+#         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+#         Year=2020) 
+#
+#
+#NC_black_2020_bg <- get_decennial(
+#  geography="block",
+#  variables= "P1_004N",
+#  summary_var="P2_001N",
+#  state="NC",
+#  year=2020,
+#  geometry=TRUE,
+#  #county="Durham"
+#)  %>%
+#   mutate(pct_black=100*(value/summary_value),
+#         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+#         Year=2020) 
+#
+#
+#final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg,NC_Asian_2020_bg ) %>%
+#  select(GeoID, Name, pct_black, pct_hispanic, pct_white, pct_asian, HH_Vacant, geometry) %>%
+#  mutate(pct_other = 100 - (pct_black + pct_white + pct_asian))
+#
+#temp <- st_transform(final_bgs, st_crs(nc_congressional_2019)) %>% st_make_valid()
 
 
 ## Tag the block level exported as centroids, to the congressional district; note this takes approximately 4-6 hours
@@ -300,7 +302,7 @@ temp <- st_transform(final_bgs, st_crs(nc_congressional_2019)) %>% st_make_valid
 centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp")
 centroids$PARTY_2019 <- centroids$SPARTY
 
-temp <- st_transform(final_bgs, st_crs(nc_congressional_2021)) %>% st_make_valid()
+temp <- st_transform(centroids, st_crs(nc_congressional_2021)) %>% st_make_valid()
 
 
 
@@ -333,17 +335,17 @@ hisp_pal <- colorNumeric(
   domain = hispanic_2020$pct_hispanic)
 
 
-map <- leaflet(temp) %>%
+map <- leaflet(congress_2019) %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(data=temp, group="2019",
-              popup=paste("Congressional District: ", temp$District, "<br>",
-                          "Party: ", temp$sParty, "<br>",
-                          "Representative 2019: ", temp$sName),
+  addPolygons(data=congress_2019, group="2019",
+              popup=paste("Congressional District: ", congress_2019$District, "<br>",
+                          "Party: ", congress_2019$sParty, "<br>",
+                          "Representative 2019: ", congress_2019$sName),
               weight=1,
-              color =~pal(temp$sParty)) %>%
-  addPolygons(data=temp_2021, group="2021",
-              popup=paste("Congressional District: ", temp_2021$DISTRICT, "<br>", "Partisan Lean: ", temp_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(temp_2021$color),
-              weight=1, fillOpacity =0.5) %>%
+              color =~pal(congress_2019$sParty)) %>%
+  addPolygons(data=congress_2021, group="2021",
+              popup=paste("Congressional District: ", congress_2021$DISTRICT, "<br>", "Partisan Lean: ", congress_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(congress_2021$color),
+              weight=1, fillOpacity =0.5) %>% 
   addPolygons(data=hispanic_2020, 
               popup=paste("Census Tract: ", hispanic_2020$GEOID, "<br>", "Percent Hispanic: ", hispanic_2020$pct_hispanic ),
               color =~hisp_pal(hispanic_2020$pct_hispanic),
@@ -421,24 +423,30 @@ ggplotly(p)
 
 
 
-### Hispanic Growth Top Counties
+### Hispanic & Asian Growth Top Counties
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+##Hispanic##
+
 NC_Hisp_2020 <- get_decennial(
   geography="county",
   variables="P2_002N",
   summary_var="P2_001N",
   state="NC",
    year=2020,
-  geometry=TRUE
+  geometry=FALSE
 ) %>% 
   mutate(pct_hispanic=100*(value/summary_value),
          new_Name = sub(" County, North Carolina", "", NAME),
          Year=2020)
 
-top_ten_2020 <- NC_Hisp_2020 %>%
+
+
+top_ten_2020_hisp <- NC_Hisp_2020 %>%
   group_by(new_Name) %>%
-  st_drop_geometry %>%
+ # st_drop_geometry %>%
   summarize(Tot_Hisp = value,
             Hisp_Share = pct_hispanic) %>%
   arrange(desc(Tot_Hisp)) %>%
@@ -446,7 +454,6 @@ top_ten_2020 <- NC_Hisp_2020 %>%
   mutate(Year='2020')
 
 
-arrange(top_ten_2020, -Tot_Hisp)
 
 
 NC_Hisp_2010 <- get_decennial(
@@ -455,7 +462,7 @@ NC_Hisp_2010 <- get_decennial(
   summary_var="P004001",
   state="NC",
   year=2010,
-  geometry=TRUE
+  geometry=FALSE
 ) %>% 
    mutate(pct_hispanic=100*(value/summary_value),
          new_Name = sub(" County, North Carolina", "", NAME),
@@ -463,9 +470,9 @@ NC_Hisp_2010 <- get_decennial(
 library(janitor)
 
 
-top_ten_2010 <- NC_Hisp_2010 %>%
+top_ten_2010_hisp <- NC_Hisp_2010 %>%
   group_by(new_Name) %>%
-  st_drop_geometry %>%
+ # st_drop_geometry %>%
   summarize(Tot_Hisp = value,
             Hisp_Share = pct_hispanic) %>%
   arrange(desc(Tot_Hisp)) %>%
@@ -476,12 +483,12 @@ top_ten_2010 <- NC_Hisp_2010 %>%
 
 
 
-sample_counties <- top_ten_2020$new_Name[1:15]
+sample_counties <- top_ten_2020_hisp$new_Name[1:15]
 
 sample_counties <-append(sample_counties, "Total")
 
 
-combined <- rbind(top_ten_2020, top_ten_2010) 
+combined <- rbind(top_ten_2020_hisp, top_ten_2010_hisp) 
 
 
 temp<- combined %>%
@@ -498,7 +505,187 @@ ggplotly(p)
 
 
 
+
+
+
+##Asian##
+
+NC_Asian_2020 <- get_decennial(
+  geography="county",
+  variables="P1_006N",
+  summary_var="P1_001N",
+  state="NC",
+   year=2020,
+  geometry=FALSE
+) %>% 
+  mutate(pct_asian=100*(value/summary_value),
+         new_Name = sub(" County, North Carolina", "", NAME),
+         Year=2020)
+
+
+NC_Asian_2010 <- get_decennial(
+  geography="county",
+  variables="P003005",
+  summary_var="P003001",
+  state="NC",
+   year=2010,
+  geometry=FALSE
+) %>% 
+  mutate(pct_asian=100*(value/summary_value),
+         new_Name = sub(" County, North Carolina", "", NAME),
+         Year=2010)
+
+
+top_ten_2020_asian <- NC_Asian_2020 %>%
+  group_by(new_Name) %>%
+ # st_drop_geometry %>%
+  summarize(Tot_Asian = value,
+            Asian_Share = pct_asian) %>%
+  arrange(desc(Tot_Asian)) %>%
+  adorn_totals('row') %>%
+  mutate(Year='2020')
+
+
+top_ten_2010_asian <- NC_Asian_2010 %>%
+  group_by(new_Name) %>%
+ # st_drop_geometry %>%
+  summarize(Tot_Asian = value,
+            Asian_Share = pct_asian) %>%
+  arrange(desc(Tot_Asian)) %>%
+  adorn_totals('row')%>%
+  mutate(Year='2010') 
+
+combined <- rbind(top_ten_2020_asian, top_ten_2010_asian) 
+
+  
+temp<- combined %>%
+  filter(new_Name %in% sample_counties)
+
+p<-ggplot(data=temp, aes(x=(reorder(new_Name, Tot_Asian)), y=Tot_Asian, fill=Year)) +
+  geom_bar(stat="identity", position='dodge') 
+
+options(scipen=5)
+# Horizontal bar plot
+p <- p + coord_flip() +ylab("Total Asian Population") +xlab("County") + ggtitle("Asian Population Growth in North Carolina, 2010-2020")
+
+ggplotly(p) 
+
+
+
+
 ```
+
+
+
+
+
+
+
+
+
+
+### Hispanic & Asian Percentage Top Counties
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+##Hispanic##
+
+
+
+
+top_ten_2020_hisp <- NC_Hisp_2020 %>%
+  group_by(new_Name) %>%
+ # st_drop_geometry %>%
+  summarize(Tot_Hisp = value,
+            Hisp_Share = pct_hispanic,
+            Tot_Pop = summary_value) %>%
+  arrange(desc(Hisp_Share)) %>%
+  mutate(Year='2020')
+
+
+
+top_ten_2010_hisp <- NC_Hisp_2010 %>%
+  group_by(new_Name) %>%
+ # st_drop_geometry %>%
+  summarize(Tot_Hisp = value,
+            Hisp_Share = pct_hispanic,
+            Tot_Pop = summary_value) %>%
+  arrange(desc(Hisp_Share)) %>%
+  mutate(Year='2010') 
+  
+
+
+sample_counties <- top_ten_2020_hisp$new_Name[1:15]
+
+
+combined <- rbind(top_ten_2020_hisp, top_ten_2010_hisp) 
+
+
+temp<- combined %>%
+  filter(new_Name %in% sample_counties)
+
+p<-ggplot(data=temp, aes(x=(reorder(new_Name, Hisp_Share)), y=Hisp_Share, fill=Year)) +
+  geom_bar(stat="identity", position='dodge') 
+
+options(scipen=5)
+# Horizontal bar plot
+p <- p + coord_flip() +ylab("Hispanic % of County Population") +xlab("County") + ggtitle("Hispanic % in North Carolina, 2010-2020")
+
+ggplotly(p) 
+
+
+
+
+
+
+##Asian##
+
+
+
+top_ten_2020_asian <- NC_Asian_2020 %>%
+  group_by(new_Name) %>%
+ # st_drop_geometry %>%
+  summarize(Tot_Asian = value,
+            Asian_Share = pct_asian) %>%
+  arrange(desc(Asian_Share)) %>%
+ # adorn_totals('row') %>%
+  mutate(Year='2020')
+
+
+top_ten_2010_asian <- NC_Asian_2010 %>%
+  group_by(new_Name) %>%
+ # st_drop_geometry %>%
+  summarize(Tot_Asian = value,
+            Asian_Share = pct_asian) %>%
+  arrange(desc(Asian_Share)) %>%
+#  adorn_totals('row')%>%
+  mutate(Year='2010') 
+
+combined <- rbind(top_ten_2020_asian, top_ten_2010_asian) 
+
+  
+temp<- combined %>%
+  filter(new_Name %in% sample_counties)
+
+p<-ggplot(data=temp, aes(x=(reorder(new_Name, Asian_Share)), y=Asian_Share, fill=Year)) +
+  geom_bar(stat="identity", position='dodge') 
+
+options(scipen=5)
+# Horizontal bar plot
+p <- p + coord_flip() +ylab("Total Asian Population") +xlab("County") + ggtitle("Asian Population Growth in North Carolina, 2010-2020")
+
+ggplotly(p) 
+
+
+
+
+```
+
+
+
+
+
 
 
 
@@ -513,17 +700,36 @@ Take 2020 North Carolina Map by Census Tract, need to tag it to 2019 Congression
 ### Race by Representative
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-race_by_rep <- centroids %>%
+
+## 2019 
+temp <- centroids %>%
   st_drop_geometry() %>%
-  group_by(sParty) %>%
-  summarize(Mean_white = mean(pct_white, na.rm=T),
-            Mean_black = mean(pct_black, na.rm=T),
-            Mean_hispanic = mean(pct_hispanic, na.rm=T))
+  group_by(PARTY_2019) %>%
+  summarize(Mean_white = mean(PCT_WHT, na.rm=T),
+            Mean_black = mean(PCT_BLC, na.rm=T),
+            Mean_hispanic = mean(PCT_HSP, na.rm=T))
            # Mean_asian = mean(pct_asian, na.rm=T))
 
 library(DT)
 
-datatable(race_by_rep, caption = "Average Racial Breakdown by 2019 Congressional Representation") %>%
+datatable(temp, caption = "Average Racial Breakdown by 2019 Congressional Representation") %>%
+  formatRound('Mean_white', 3) %>%
+ formatRound('Mean_black', 3) %>%
+ formatRound('Mean_hispanic', 3) 
+
+## 2020
+
+temp <- centroids %>%
+  st_drop_geometry() %>%
+  group_by(PARTY_2021) %>%
+  summarize(Mean_white = mean(PCT_WHT, na.rm=T),
+            Mean_black = mean(PCT_BLC, na.rm=T),
+            Mean_hispanic = mean(PCT_HSP, na.rm=T))
+           # Mean_asian = mean(pct_asian, na.rm=T))
+
+library(DT)
+
+datatable(temp, caption = "Average Racial Breakdown by 2021 Congressional Representation") %>%
   formatRound('Mean_white', 3) %>%
  formatRound('Mean_black', 3) %>%
  formatRound('Mean_hispanic', 3) 
@@ -546,7 +752,7 @@ First, we need to get the data. We're talking about the entire state, so the dat
 We need to start with getting the 2020 hispanic data for the entire state, what are the totals for each county, how has that changed from 2010.
 
 
-
+** To do Add the ggplot centroid map - static, so they get an idea, with the congressional districts overlaid, maybe color coded for blue/red 
 
 
 
@@ -559,43 +765,29 @@ We need to start with getting the 2020 hispanic data for the entire state, what 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
-
-
-
-temp <- st_transform(final_bgs, st_crs(nc_congressional_2019)) %>% st_make_valid()
-
-
-## Tag the block level exported as centroids, to the congressional district; note this takes approximately 4-6 hours
-
-centroids <- temp %>%
- st_point_on_surface() %>%
-  st_join(nc_congressional_2019 %>% select(sParty),st_nn, k = 1, maxdist=500) %>%
-  mutate(Party_2019 = case_when(
-    sParty == "Democrat" ~ 1,
-    sParty=="Republican" ~ -0
-  ))
-
-temp <- st_transform(final_bgs, st_crs(nc_congressional_2021)) %>% st_make_valid()
-
 centroids <- centroids %>%
-  st_join(nc_congressional_2021 %>% select(Pred_Party) ,st_nn, k = 1, maxdist=500) %>%
-  mutate(Party_2021=Pred_Party)
+  mutate(
+    PARTY_2019_var = case_when(
+      PARTY_2019 == "Democrat" ~ 1,
+      PARTY_2019 == "Republican" ~ 0,
+    )
+  )
 
 
 ##Train and Test Data Sets
 
-train <- centroids[1:round(0.75*nrow(centroids),0),]
-test <- centroids[round(0.75*nrow(centroids),0)+1:nrow(centroids),]
+train <- centroids[1:177478,]
+test <- centroids[177479:236638,]
 
 ## Build Logit model based off of centroids database, with sParty as the dummy variable, pctHispanic as the IV
 
-model_2019_blocks <- glm(Party_2019 ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=ex)
+model_2019_blocks <- glm(PARTY_2019_var ~PCT_HSP + PCT_WHT + PCT_BLC + HH_VCNT,family=binomial(link='logit'),data=train)
 
 summary(model_2019_blocks)
 
 
 
-model_2021 <- glm(Party_2021 ~pct_hispanic + pct_white + pct_black + HH_Vacant,family=binomial(link='logit'),data=centroids)
+model_2021 <- glm(PARTY_2021 ~PCT_HSP + PCT_WHT + PCT_BLC + HH_VCNT,family=binomial(link='logit'),data=train)
 
 summary(model_2021)
 
@@ -606,7 +798,7 @@ pred <- predict(model_2019_blocks, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$Party
+y_act <- test$PARTY_2019_var
 
 mean(y_pred == y_act, na.rm=T) 
 
@@ -616,7 +808,7 @@ pred <- predict(model_2021, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$Party
+y_act <- test$PARTY_2021
 
 mean(y_pred == y_act, na.rm=T) 
 
@@ -634,7 +826,7 @@ mean(y_pred == y_act, na.rm=T)
 ## Odds Ratios
 
 ```{r}
-exp(coef(model_2019))
+exp(coef(model_2019_blocks))
 exp(coef(model_2021))
 
 exp(cbind(OR = coef(model_2019_blocks), confint(model_2019_blocks)))
@@ -649,25 +841,25 @@ exp(cbind(OR = coef(model_2021), confint(model_2021)))
 
 
 ```{r}
-
-newdata1 <- with(ex, data.frame(#pct_hispanic = mean(pct_hispanic,na.rm=T),
-                                        pct_black = mean(pct_black,na.rm=T),
-                                        pct_white = mean(pct_white,na.rm=T),
-                                        HH_Vacant = mean(HH_Vacant, na.rm=T),
-                                        rank = factor(1:4),
-                                       hispanic_rank = NA))
-
-newdata1$hispanic_rank[1] <- quantile(centroids$pct_hispanic, 0.25, na.rm=T)
-newdata1$hispanic_rank[2] <- quantile(centroids$pct_hispanic, 0.5, na.rm=T)
-newdata1$hispanic_rank[3] <- quantile(centroids$pct_hispanic, 0.75, na.rm=T)
-newdata1$hispanic_rank[4] <- quantile(centroids$pct_hispanic, 1, na.rm=T)
-
-
-
-
-
-newdata1$rankP <- predict(model_2019_blocks, newdata = newdata1, type = "response")
-newdata1
+# 
+# newdata1 <- with(ex, data.frame(#pct_hispanic = mean(pct_hispanic,na.rm=T),
+#                                         pct_black = mean(pct_black,na.rm=T),
+#                                         pct_white = mean(pct_white,na.rm=T),
+#                                         HH_Vacant = mean(HH_Vacant, na.rm=T),
+#                                         rank = factor(1:4),
+#                                        hispanic_rank = NA))
+# 
+# newdata1$hispanic_rank[1] <- quantile(centroids$pct_hispanic, 0.25, na.rm=T)
+# newdata1$hispanic_rank[2] <- quantile(centroids$pct_hispanic, 0.5, na.rm=T)
+# newdata1$hispanic_rank[3] <- quantile(centroids$pct_hispanic, 0.75, na.rm=T)
+# newdata1$hispanic_rank[4] <- quantile(centroids$pct_hispanic, 1, na.rm=T)
+# 
+# 
+# 
+# 
+# 
+# newdata1$rankP <- predict(model_2019_blocks, newdata = newdata1, type = "response")
+# newdata1
 
 
 
@@ -681,42 +873,12 @@ newdata1
 
 ```{r}
 
-predicted <- predict(model_2019_blocks, test, type="response") 
-
-library(InformationValue)
-
-
-optCutOff <- optimalCutoff(test$Party, predicted)[1] 
-```
-
-
-
-
-## redist 
-
-
-
-
-
-```{r}
-library(redist)
-library(dplyr)
-
-data(iowa)
-
-iowa_map = redist_map(northcarolina, existing_plan=cd_2010, pop_tol=0.0001, total_pop = pop)
-
-
-iowa_plans = redist_smc(iowa_map, nsims=250, verbose=FALSE)
-
-
-library(ggplot2)
-library(patchwork) # for plotting
-
-redist.plot.plans(iowa_plans, draws=c("cd_2010", "1", "2", "3"),geom=iowa_map)
-
-
-
+# predicted <- predict(model_2019_blocks, test, type="response") 
+# 
+# library(InformationValue)
+# 
+# 
+# optCutOff <- optimalCutoff(test$Party, predicted)[1] 
 ```
 
 
