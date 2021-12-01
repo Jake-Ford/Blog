@@ -85,6 +85,9 @@ nc_congressional_2021$Pred_Party <- case_when(
 
 trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
 
+centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp")
+centroids$PARTY_2019 <- centroids$SPARTY
+
 
 
 ```
@@ -93,22 +96,21 @@ trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2
 
 
 
-The long awaited 2020 Census data provides the best estimate of the distribution of population changes by racial composition, available from state to census block geographies. Coinciding with the constitutionally required release is the redistricting process for state legislatures and congressional districts. I live in Durham (called by many to be the Mecca of the South) in a state where unfettered partisan gerrymandering brazenly strikes advantages for the party in power, right now Republicans in the General Assembly. Plenty of astounding work by mathematicians like of Dr Moon Duchin at Tufts and Dr Jonathan Mattingly at Duke are providing policymakers and engaged citizens with quantifiable tools to measure the consquences of the players making up their own rules, of the politicians drawing their own lines. This ain't that. 
+The long awaited 2020 Census data provides the best estimate of the distribution of population changes by racial composition, available from state to census block geographies. Coinciding with the constitutionally required release is the redistricting process for state legislatures and congressional districts. I live in Durham (called the Mecca of the South to many/most) in a state where unfettered partisan gerrymandering brazenly strikes advantages for the party in power, right now Republicans in the General Assembly. Plenty of astounding work by mathematicians like Dr Moon Duchin at Tufts and Dr Jonathan Mattingly at Duke are providing policymakers and engaged citizens with quantifiable tools to measure the consequences of the players making up their own rules, of the politicians drawing their own lines. This ain't that. 
 
-In this, I use geospatial analysesof the newly released census data, using the smallest level geographic unit (census block y'all), to determine how the newly proposed 2021-2030 lines in the Tar Heel State interact with demographic shifts. Mainly, we'll be looking at racial composition and the party each block is represented by in US House of Representatives, and if I remember, the NC General Assembly. Given the large number of blocks in NC (236,638), a simplified ML logit model is deployed and given ample training data for boosting. The question(s) I'm looking to answer:
+In this, I use geospatial analyses of the newly released census data, using the smallest level geographic unit (census block y'all), to determine how the newly proposed 2021-2030 lines in the Tar Heel State interact with demographic shifts. Mainly, we'll be looking at racial composition and the party each block is represented by in US House of Representatives, and if I remember, the NC General Assembly. Given the large number of blocks in NC (236,638), a simplified ML logit model is deployed and given ample training data for boosting. The question(s) I'm looking to answer:
 
 1. How has NC demographically over last ten years? (hint: a lot)
 2. What demographics are most represented by either major political party? 
 3. Did redistricting cause any particular racial group to increase likelihood of being represented by a particular party?
 4. Why hasn't Mayor-soon-to-be-elect Elaine O'Neil formally changed the name to 'Mecca of the South' yet?  
 
-Disclaimer: This is just an exploratory analysis and model. The model will be described in the below section, which I'm sure could be improved upon or entirely redesigned. But the richness of the data and the shift in representative districts is the important piece to focus on. 
+Disclaimer: This is just an exploratory analysis and model, no where near the caliber of aforementioned actual scholars in the game. The model will be described in the below section, which I'm sure could be improved upon or entirely redesigned. But the richness of the data and the shift in representative districts is the important piece to focus on. 
 
 
 
 ## I choose you (gerry)-mander! 
 
-For those who got the joke, thanks for growing up in the 1990's. 
 
 In the below map, you'll find both sets of US House district lines, what I'll call the 2019 and the 2021. The 2019 districts are shaded by party. The 2021 are shaded by FiveThirtyEight's [Partisan Lean](https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/) for North Carolina's new districts. Note: these lines are facing legal challenges, but so far have survived the gauntlet. 
 
@@ -178,7 +180,7 @@ map
 
 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
 #NC_Hisp_2020_bg <- get_decennial(
 #  geography="block",
@@ -276,8 +278,7 @@ map
 
 ## Tagged the centroids in TransCAD, import back in - work smarter, not harder 
 
-centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp")
-centroids$PARTY_2019 <- centroids$SPARTY
+
 
 temp <- st_transform(centroids, st_crs(nc_congressional_2021)) %>% st_make_valid()
 
@@ -314,16 +315,7 @@ hisp_pal <- colorNumeric(
 
 map <- leaflet(congress_2019) %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(data=congress_2019, group="2019",
-              popup=paste("Congressional District: ", congress_2019$District, "<br>",
-                          "Party: ", congress_2019$sParty, "<br>",
-                          "Representative 2019: ", congress_2019$sName),
-              weight=1,
-              color =~pal(congress_2019$sParty)) %>%
-  addPolygons(data=congress_2021, group="2021",
-              popup=paste("Congressional District: ", congress_2021$DISTRICT, "<br>", "Partisan Lean: ", congress_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(congress_2021$color),
-              weight=1, fillOpacity =0.5) %>% 
-  addPolygons(data=hispanic_2020, 
+   addPolygons(data=hispanic_2020, 
               popup=paste("Census Tract: ", hispanic_2020$GEOID, "<br>", "Percent Hispanic: ", hispanic_2020$pct_hispanic ),
               color =~hisp_pal(hispanic_2020$pct_hispanic),
               weight=1, fillOpacity =0.5,group="2020 Hispanic") %>%
@@ -331,7 +323,7 @@ map <- leaflet(congress_2019) %>%
               popup=paste("Census Tract: ", hispanic_2010$GEOID, "<br>", "Percent Hispanic: ", hispanic_2010$pct_hispanic ),
               color =~hisp_pal(hispanic_2010$pct_hispanic),
               weight=1, fillOpacity =0.5,group="2010 Hispanic") %>%
-      addLayersControl(baseGroups = c("2019", "2021", "2020 Hispanic", "2010 Hispanic"))
+      addLayersControl(baseGroups = c("2020 Hispanic", "2010 Hispanic"))
                        
 map
 
@@ -387,13 +379,14 @@ compare <- rbind(state_2010, state_2020)
 
 
 library(plotly)
+library(scales)
 
 p<-ggplot(data=compare, aes(x=(reorder(variable, value)), y=value, fill=Year)) +
-  geom_bar(stat="identity", position='dodge') 
+  geom_bar(stat="identity", position='dodge') +scale_y_continuous(label=comma)
 
 options(scipen=5)
 # Horizontal bar plot
-p <- p + coord_flip() +ylab("Total Population") +xlab("Race") + ggtitle("Total Population Growth by Race, 2010-2020") 
+p <- p + coord_flip() +ylab("Total Population") +xlab("Race") + ggtitle("Total Population Growth by Race, 2010-2020")
 ggplotly(p) 
 
 
