@@ -1,7 +1,5 @@
 ---
 title: "North Carolina Redistricting and Demographic Changes"
-description: |
-  2020 Census Data vs Newly Drawn Districts
 author:
   - name: Jacob Ford
     url: https://example.com/norajones
