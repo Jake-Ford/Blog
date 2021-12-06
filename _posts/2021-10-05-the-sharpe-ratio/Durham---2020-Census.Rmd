@@ -334,7 +334,7 @@ But the below graph shows a bit more to the story. The Black population stayed r
 
 
 
-### Total State by Race
+### Total Growth by Race
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -383,7 +383,7 @@ p<-ggplot(data=compare, aes(x=(reorder(variable, value)), y=value, fill=Year)) +
 
 options(scipen=5)
 # Horizontal bar plot
-p <- p + coord_flip() +ylab("Total Population") +xlab("Race") + ggtitle("Total Population Growth by Race, 2010-2020")
+p <- p + coord_flip() +ylab("Total Population") +xlab("Race") + ggtitle("Hispanic and Asian Population Booming, Whites Declining")
 ggplotly(p) 
 
 
@@ -556,6 +556,8 @@ ggplotly(p)
 
 ### Hispanic & Asian Percentage Top Counties
 
+From previous graphs, Asian and Hispanics combined make up approximately 15% of the entire state's population. Below are the top counties by proportion of Asian/Hispanic population: 
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
@@ -652,6 +654,10 @@ ggplotly(p)
 
 ```
 
+
+### Putting it All Together: Difference in Population by Race in North Carolina, 2010-2020
+
+Remember all that jazz about North Carolina gaining another seat in Congress? We've seen a disproportionate amount of growth has been caused by minorities, in particular Hispanic and Asians. Guildford County, where Greensboro and nearby Winston Salem reside, saw a net-negative of white population by 2020, but positive growth in each other observed race. In the northeastern part of the state, an economically distressed agricultural sector, negative population growth is observed, mainly contributed by black populace leaving. 
 
 
 
@@ -803,12 +809,20 @@ county_map
 ```
 
 
+### Model Discussion
 
 
+
+
+This leads me to the following question: what is the probability of a North Carolian by race to be represented by a democrat or republican? How drastically does this change by race? Finally, how do these probabilities change, if at all, by the new congressional districts proposed. 
 
 
 
 ### Race by Representative
+
+Average US House republican district in North Carolina with the old lines was actually less more white compared to the new lines proposed. May be just a natural reflection of white population declining in certain areas (see above map). Similarly for Hispanics, those percentages look nearly identical from the old lines to the new lines. 
+
+More interestingly, the average black population increased for democrats by 1.6 percentage points. Could imply the demographic shifts and the drawing of new lines may result in higher likelihood for black North Carolinians to be drawn into a democratic district? Not entirely sold yet. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -819,7 +833,7 @@ temp <- centroids %>%
   summarize(Mean_white = mean(PCT_WHT, na.rm=T),
             Mean_black = mean(PCT_BLC, na.rm=T),
             Mean_hispanic = mean(PCT_HSP, na.rm=T))
-           # Mean_asian = mean(pct_asian, na.rm=T))
+          #  Mean_asian = mean(pct_asian, na.rm=T))
 
 library(DT)
 
@@ -832,7 +846,11 @@ datatable(temp, caption = "Average Racial Breakdown by 2019 Congressional Repres
 
 temp <- centroids %>%
   st_drop_geometry() %>%
-  group_by(PARTY_2021) %>%
+  mutate(`PARTY 2021` = case_when(
+    PARTY_2021 == 0 ~ "Republican",
+    PARTY_2021 == 1 ~ "Democrat"
+  )) %>%
+  group_by(`PARTY 2021`) %>%
   summarize(Mean_white = mean(PCT_WHT, na.rm=T),
             Mean_black = mean(PCT_BLC, na.rm=T),
             Mean_hispanic = mean(PCT_HSP, na.rm=T))
@@ -852,25 +870,18 @@ datatable(temp, caption = "Average Racial Breakdown by 2021 Congressional Repres
 
 
 
-
-## Model Discussion
-
-What is the probability of a hispanic in North Carolina being represented by a Democrat in the US House of Representatives? What about a Republican? Newly released congressional redistricting, likely to be challenged in court, along with recently available 2020 demographic data provides an opportunity to delve deeper. 
-
-First, we need to get the data. We're talking about the entire state, so the data is going to be large if we do anything more granular than census block group. Maybe even the tract will be good enough for now.
-
-
-We need to start with getting the 2020 hispanic data for the entire state, what are the totals for each county, how has that changed from 2010.
-
-
-** To do Add the ggplot centroid map - static, so they get an idea, with the congressional districts overlaid, maybe color coded for blue/red 
-
-
-
-
-
-
 ## Model Deployment
+
+To keep things simple yet spicey, let's use a bare bones logit model on likelihood of being represented by a Democrat relative to a Republican. We'll analyze both the old and the new congressional districts. You see now why it was important to roll with the FiveThirtyEight projections, we need definitive results for projected house membership in 2022 midterms. 
+
+As mentioned previously there are nearly a quarter million census blocks in North Carolina. The centroid of each block, is tagged to each congressional district's representation (D or R). The main benefit of using blocks instead of much larger tracts or block groups, even counties, is two-fold. 
+
+1. Larger - in fact massive -  n-size, hence larger train/test dataset for ML application
+2. Avoid tagging errors, i.e. county/tract/block group lines that intersect with congressional district lines. This is a common geospatial principle, and avoiding overlaps is preferred.
+
+
+
+
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -929,6 +940,14 @@ mean(y_pred == y_act, na.rm=T)
 ```
 
 
+## Logistic Regression Curve
+
+```{r}
+ggplot(test, aes(x=PARTY_2019_var, y=PCT_BLC)) + 
+  geom_point(alpha=.5) +
+  stat_smooth(method="glm", se=FALSE, method.args = list(family=binomial),
+              col="red")
+```
 
 
 
