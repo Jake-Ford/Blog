@@ -832,20 +832,12 @@ county_map
 ```
 
 
-### Model Discussion
-
-
-
-
-This leads me to the following question: what is the probability of a North Carolian by race to be represented by a democrat or republican? How drastically does this change by race? Finally, how do these probabilities change, if at all, by the new congressional districts proposed. 
-
-
 
 ### Race by Representative
 
-Average US House republican district in North Carolina with the old lines was actually less more white compared to the new lines proposed. May be just a natural reflection of white population declining in certain areas (see above map). Similarly for Hispanics, those percentages look nearly identical from the old lines to the new lines. 
+Average US House republican district in North Carolina with the old lines was actually less more white compared to the new lines proposed. May be just a natural reflection of white population declining in certain areas (see above map). . 
 
-More interestingly, the average black population increased for democrats by 1.6 percentage points. Could imply the demographic shifts and the drawing of new lines may result in higher likelihood for black North Carolinians to be drawn into a democratic district? Not entirely sold yet. 
+More interestingly, the average black population increased for democrats by 3 percentage points, while Asian and Hispanics in Republican districts remained relatively consistent the Democratic districts saw sharp rises in average representation. Could imply the demographic shifts and the drawing of new lines may result in higher likelihood for minority North Carolinians to be drawn into a democratic district? Not entirely sold yet. Also, the average income for Democratic districts in the new lines are starkly higher than previous. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -906,10 +898,7 @@ datatable(temp, caption = "Average Racial Breakdown by 2021 Congressional Repres
 
 
 
-
-
-
-## Model Deployment
+## Model Discussion
 
 To keep things simple yet spicey, let's use a bare bones logit model on likelihood of being represented by a Democrat relative to a Republican. We'll analyze both the old and the new congressional districts. You see now why it was important to roll with the FiveThirtyEight projections, we need definitive results for projected house membership in 2022 midterms. 
 
@@ -1013,6 +1002,8 @@ For blacks, the probability of residing in a democratic district (as one would e
 Whites see a nearly identical curve, just shifted downwards, implying that whites are being much more efficiently collected in republican districts.
 
 Hispanics are being newly represented as well, as the likelihood across the distribution of percentage Hispanic remains nearly flat. 
+
+And goodness, if you google logit curve you should immediatley get a picture of that final Asian Logit curve. What a beaut. The consistency between different years is likely the result of small represntation overall in the state, though clearly they are the most dependable democratic demographic as the data shows. 
 
 
 ## Model Fits
