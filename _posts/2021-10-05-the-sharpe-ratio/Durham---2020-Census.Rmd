@@ -1108,7 +1108,7 @@ ggplot(data = df,
 
 ## Conclusion
 
-I used to work in the North Carolina General Assembly for division called the Program Evaluation Division, a state level GAO attempting to make government services more efficient and effective. After I left in 2020, the entire shop was eliminated after being used as a political football by schmuck Republican leaders like Phil Berger and Tim Moore. Going into this blog, I didn't exactly expect to see evidence of black and brown citizens being walled into a different political district. The results from this are actually encouraging, perhaps? If I'm allowed to be encouraged by anything in the post COVID-era? 
+Going into this post, getting a bit out of hand, I didn't exactly expect to see definitive evidence of black and brown citizens being walled into a different political district. I"m a bit suprised there isn't a clear trend.  The results from this are actually encouraging, perhaps? If I'm allowed to be encouraged by anything in the post COVID-era? 
 
 Ways to improve:
 
