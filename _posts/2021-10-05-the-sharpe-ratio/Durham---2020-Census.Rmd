@@ -900,7 +900,7 @@ test <- centroids[177479:236638,]
 
 
 
-```{r echo=TRUE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 
 ### 2019 Model Outputs
 
@@ -915,7 +915,7 @@ summary(model_2019_blocks)
 ```
 
 
-```{r echo=TRUE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 ### 2021 Model Outputs
 
 
@@ -937,42 +937,50 @@ summary(model_2021)
 
 ggplot(test, aes(x=PCT_BLC, y=PARTY_2019_var)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
-  scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts")
+  scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Black")
 
 ggplot(test, aes(x=PCT_BLC, y=PARTY_2021)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
-  scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts")
+  scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Black")
 
 
 ggplot(test, aes(x=PCT_WHT, y=PARTY_2019_var)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
-  scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts")
+  scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts White")
 
 ggplot(test, aes(x=PCT_WHT, y=PARTY_2021)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
-  scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts")
+  scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts White")
 
 
 ggplot(test, aes(x=PCT_HSP, y=PARTY_2019_var)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
-  scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts")
+  scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Hispanic")
 
 ggplot(test, aes(x=PCT_HSP, y=PARTY_2021)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
-  scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts")
+  scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Hispanic")
 
 
 
 
 ```
 
+Ok what the hell is going on here. 
+
+For blacks, the probability of residing in a democratic district (as one would expect) rises as percentage of black residents increase. However the peak is lower, suggesting that heavily populated black areas are possibly being newly represented by republicans in 2021 (thank you newly drawn NC #2 district). 
+
+Whites see a nearly identical curve, just shifted downwards, implying that whites are being much more efficiently collected in republican districts.
+
+Hispanics are being newly represented as well, as the likelihood across the distribution of percentage Hispanic remains nearly flat. 
 
 
-## Predictive Fits
+## Model Fits
 
-Predictive fit of model using 2019 congressional districts: 
 
-```{r message=FALSE, warning=FALSE}
+Predictive fit of model using 2019 congressional districts, this tells us how accurate the supervised regression model performs. For   
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 ## Predictive Fits
 
@@ -993,7 +1001,7 @@ mean(y_pred == y_act, na.rm=T)
 Predictive fit of model using 2021 congressional districts: 
 
 
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 ## Predictive Fits
 
