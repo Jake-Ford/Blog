@@ -955,7 +955,7 @@ summary(model_2021)
 
 
 
-ggplot(test, aes(x=PCT_BLC, y=PARTY_2019)) + geom_point(fill='red') + 
+a <- ggplot(test, aes(x=PCT_BLC, y=PARTY_2019)) + geom_point(color='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Black")
 
@@ -980,7 +980,6 @@ ggplot(test, aes(x=PCT_HSP, y=PARTY_2019)) + geom_point(fill='red') +
 ggplot(test, aes(x=PCT_HSP, y=PARTY_2019)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Hispanic")
-
 
 ggplot(test, aes(x=PCT_ASN, y=PARTY_2019)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
