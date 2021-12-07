@@ -920,14 +920,6 @@ As mentioned previously there are nearly a quarter million census blocks in Nort
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-centroids <- centroids %>%
-  mutate(
-    PARTY_2019_var = case_when(
-      PARTY_2019 == "Democrat" ~ 1,
-      PARTY_2019 == "Republican" ~ 0,
-    )
-  )
-
 
 ##Train and Test Data Sets
 
@@ -1026,7 +1018,7 @@ Hispanics are being newly represented as well, as the likelihood across the dist
 ## Model Fits
 
 
-Predictive fit of model using 2019 congressional districts, this tells us how accurate the supervised regression model performs. For 2019, the machine learning model was able to accurate predict at this rate: 
+Predictive fit of model using 2019 congressional districts, this tells us how accurate the supervised regression model performs. For 2019, the machine learning model was able to accurate predict at 71.1%; but the 2021 saw a drastic increase to 88.3%. This suggests the 2021 districts, as the model is constructed, is sorting out it's voters more effectively. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -1034,28 +1026,13 @@ Predictive fit of model using 2019 congressional districts, this tells us how ac
 
 pred <- predict(model_2019_blocks, newdata = test, type = "response")
 
-pred <- pred %>% filter(!is.na(pred))
+
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$PARTY_2019_var
+y_act <- test$PARTY_2019
 
-mean(y_pred == y_act, na.rm=T) 
-
-
-
-
-```
-
-
-Whereas the 2021 model was able to increase it to: 
-
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-
-## Predictive Fits
-
-
+pred_2019 <- mean(y_pred == y_act, na.rm=T) 
 
 pred <- predict(model_2021, newdata = test, type = "response")
 
@@ -1063,15 +1040,25 @@ y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
 y_act <- test$PARTY_2021
 
-mean(y_pred == y_act, na.rm=T) 
+pred_2021 <- mean(y_pred == y_act, na.rm=T) 
 
+vals <- c(pred_2019, pred_2021)
+
+df <- data.frame(Year = c('2019', '2021'),vals)
+
+df$vals <- round(df$vals, 3)
+
+
+
+ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + geom_text(aes(label=vals), vjust=-0.25)+
+  xlab("Year")+ylab("Predictive Strength")+theme_minimal()
 
 
 ```
 
 
-This doesn't prove racial gerrymandering. It could reflect the 'Big Sort' occuring over ten years, or carpet-baggers like yours truly coming down South with our big liberal/socialist agenda, congregating in big cities which may intersect with growing political sorting happening more broadly. Nonetheless, the model results for the 2021 lines are encouraging. 
 
+This doesn't prove racial gerrymandering. It could reflect the 'Big Sort' occuring over ten years, or carpet-baggers like yours truly coming down South with our big liberal/socialist agenda, congregating in big cities which may intersect with growing political sorting happening more broadly. Nonetheless, the model results for the 2021 lines are encouraging. 
 
 
 
@@ -1094,23 +1081,26 @@ exp(cbind(OR = coef(model_2021), confint(model_2021)))
 
 ## Odds Ratio Box Plot
 
-Finally, the odds ratios below show that 2021 lines are more fair to black North Carolinians. 
+Finally, the odds ratios below show that 2021 lines are more fair to black North Carolinians, while Hispanics and Asians are being sorted into Democratic districts more in the newly drawn districts. We saw previously they were the fastest growing demographic in the State, and now we see how state lawmakers intend on responding to this trend for the next decade. 
+
+Additionally, wealthier areas are staggeringly more likely to be sorted into democratic districts in the new lines. Booming cities like Raleigh, Greensboro, Cary and Mecca of the South are magnets for high paying jobs, for the mean time low costs of living, lower tax rates relative to the NE corridor and West Coast; all these likely contribute to this I'd venture. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-boxLabels = c("Hispanic", "White", "Black", "Asian", "Log Median Income")
+boxLabels = c("Hispanic", "White", "Black", "Asian")
 
 ##2019
 
 
-df <- data.frame(lables=boxLabels, boxOdds = c(1.0021304779   , 
-0.9934778163  , 1.0200081806 ,1.0312674226  ,2.0259539656  ), boxCILow = c(1.0014661525    , 0.9931773600   ,1.0195372923 ,1.0295998976  ,1.9723423285   ), 
-                        boxCIHigh = c(1.002793072, 0.993778233, 1.020480101,1.032950946,2.081119204))
+df <- data.frame(lables=boxLabels, 
+                  boxOdds = c(1.0021304779, 0.9934778163  , 1.0200081806 ,1.0312674226    ), 
+                        boxCILow = c(1.0014661525   , 0.9931773600   ,1.0195372923 ,1.0295998976     ), 
+                        boxCIHigh = c(1.002793072, 0.993778233, 1.020480101,1.032950946))
 
 p <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
 
 
 ggplot(data = df,
-       mapping = aes(y = forcats::fct_inorder(f = rev(x = boxLabels)))) +
+       mapping = aes(y = forcats::fct_inorder(f = (x = boxLabels)))) +
   geom_vline(xintercept = 1) +
   geom_point(mapping = aes(x = boxOdds)) +
   geom_errorbarh(mapping = aes(xmin = boxCILow,
@@ -1120,21 +1110,21 @@ ggplot(data = df,
   #                    minor_breaks = NULL,
   #                    labels = (0.5 * (1:10))) +
   labs(x = "Odds Ratio",
-       y = "") +theme_minimal() + ggtitle("2019 Model Odds Ratios")
+       y = "") +theme_minimal() + ggtitle("2019 Model Odds Ratios, Race")
 
 
 ##2021
 
 
-df <- data.frame(lables=boxLabels, boxOdds = c(1.0003090  , 
-0.9960549  , 1.0172424 ), boxCILow = c(0.9995740  , 0.9957221  ,1.0167774 ), 
-                        boxCIHigh = c(1.0010402, 0.9963878, 1.0177078))
+df <- data.frame(lables=boxLabels, boxOdds = c(1.012368848609690   , 
+0.993498405513978   , 1.013385901077802,1.042262592003207    ), boxCILow = c(1.011481634734796   , 0.993044840129250   ,1.012728356907708,1.040464698203379   ), 
+                        boxCIHigh = c(1.013251325461511, 0.993952139817316, 1.014042344750129,1.044072940422991))
 
 p <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
 
 
 ggplot(data = df,
-       mapping = aes(y = forcats::fct_inorder(f = rev(x = boxLabels)))) +
+       mapping = aes(y = forcats::fct_inorder(f = (x = boxLabels)))) +
   geom_vline(xintercept = 1) +
   geom_point(mapping = aes(x = boxOdds)) +
   geom_errorbarh(mapping = aes(xmin = boxCILow,
@@ -1144,7 +1134,34 @@ ggplot(data = df,
   #                    minor_breaks = NULL,
   #                    labels = (0.5 * (1:10))) +
   labs(x = "Odds Ratio",
-       y = "") +theme_minimal() + ggtitle("2021 Model Odds Ratios")
+       y = "") +theme_minimal() + ggtitle("2021 Model Odds Ratios, Race")
+
+
+
+
+# Median Income
+
+
+boxLabels = c("2019 District", "2021 Districts")
+
+df <- data.frame(lables=boxLabels, boxOdds = c(2.0259539656   , 5.310856286752776    ), boxCILow = c(1.9723423285   , 5.108356308166039   ), 
+                        boxCIHigh = c(2.081119204,5.521796860873518))
+
+p <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
+
+
+ggplot(data = df,
+       mapping = aes(y = forcats::fct_inorder(f = (x = boxLabels)))) +
+  geom_vline(xintercept = 1) +
+  geom_point(mapping = aes(x = boxOdds)) +
+  geom_errorbarh(mapping = aes(xmin = boxCILow,
+                               xmax = boxCIHigh)) +
+  coord_trans(x = scales::exp_trans()) +
+  # scale_x_continuous(breaks = log(x = 0.5 * (1:10)),
+  #                    minor_breaks = NULL,
+  #                    labels = (0.5 * (1:10))) +
+  labs(x = "Odds Ratio",
+       y = "") +theme_minimal() + ggtitle("Median Income Logged")
 
 
 
