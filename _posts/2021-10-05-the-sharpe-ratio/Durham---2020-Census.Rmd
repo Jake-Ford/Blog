@@ -83,8 +83,10 @@ nc_congressional_2021$Pred_Party <- case_when(
 
 trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
 
-centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp")
-centroids$PARTY_2019 <- centroids$SPARTY
+centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp") %>%
+  mutate(PARTY_2019 = P_2019) %>%
+  filter(!(is.na(PARTY_2019)))
+
 
 
 
@@ -112,7 +114,7 @@ Disclaimer: This is just an exploratory analysis and model, no where near the ca
 
 In the below map, you'll find both sets of US House district lines, what I'll call the 2019 and the 2021. The 2019 districts are shaded by party. The 2021 are shaded by FiveThirtyEight's [Partisan Lean](https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/) for North Carolina's new districts. Note: these lines are facing legal challenges, but so far have survived the gauntlet. 
 
-For the model preparation, I assume the predictions by *heads bow* Nate Silver and his team of god-fearing data wonks hold true, meaning the 2022 midterm elections follow the partisan lean exactly. This may likely be generous for Democrats, as the newly drawn 2nd District, where my own represenative in Congress GK Butterfield leaves a vacant seat, is just slightly in their favor at +1 D's. 
+For the model preparation, I assume the predictions by *heads bow* Nate Silver and his team of god-fearing data wonks hold true, meaning the 2022 midterm elections follow the partisan lean exactly. This may likely be generous for Democrats, as the newly drawn 2nd District, where my own represenative in Congress GK Butterfield leaves a vacant seat, is just slightly in their favor at +1 D's. In this case, the North Carolina 2nd goes to the Republicans despite the +1 D advantage, deal with it. 
 
 
 
@@ -180,7 +182,7 @@ map
 
 ```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
-#NC_Hisp_2020_bg <- get_decennial(
+# NC_Hisp_2020_bg <- get_decennial(
 #  geography="block",
 #  variables= "P2_002N",
 #  summary_var="P2_001N",
@@ -188,15 +190,15 @@ map
 #  year=2020,
 #  geometry=TRUE,
 #  #county="Durham"
-#)  %>%
+# )  %>%
 #   mutate(pct_hispanic=100*(value/summary_value),
 #         new_Name = sub(" County, Nsorth Carolina", "", NAME),
 #         Year=2020,
 #         GeoID = GEOID,
 #         Name = NAME)
-#
-#
-#NC_Asian_2020_bg <- get_decennial(
+# 
+# 
+# NC_Asian_2020_bg <- get_decennial(
 #  geography="block",
 #  variables= "P1_006N",
 #  summary_var="P1_001N",
@@ -204,27 +206,27 @@ map
 #  year=2020,
 #  geometry=TRUE,
 #  #county="Durham"
-#)  %>%
+# )  %>%
 #   mutate(pct_asian=100*(value/summary_value),
 #         new_Name = sub(" County, Nsorth Carolina", "", NAME),
 #         Year=2020,
 #         GeoID = GEOID,
 #         Name = NAME)
-#
-#
-#NC_HH_2020_bg <- get_decennial(
+# 
+# 
+# NC_HH_2020_bg <- get_decennial(
 #  geography="block",
 #  variables= "H1_003N",
 #  state="NC",
 #  year=2020,
 #  geometry=TRUE,
 #  #county="Durham"
-#)  %>%
+# )  %>%
 #   mutate(new_Name = sub(" County, Nsorth Carolina", "", NAME),
-#         Year=2020, HH_Vacant = value) 
-#
-#
-#NC_white_2020_bg <- get_decennial(
+#         Year=2020, HH_Vacant = value)
+
+
+# NC_white_2020_bg <- get_decennial(
 #  geography="block",
 #  variables= "P1_003N",
 #  summary_var="P2_001N",
@@ -232,13 +234,13 @@ map
 #  year=2020,
 #  geometry=TRUE,
 #  #county="Durham"
-#)  %>%
+# )  %>%
 #   mutate(pct_white=100*(value/summary_value),
 #         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-#         Year=2020) 
-#lib
-#
-#NC_black_2020_bg <- get_decennial(
+#         Year=2020)
+# 
+# 
+# NC_black_2020_bg <- get_decennial(
 #  geography="block",
 #  variables= "P1_004N",
 #  summary_var="P2_001N",
@@ -246,17 +248,38 @@ map
 #  year=2020,
 #  geometry=TRUE,
 #  #county="Durham"
-#)  %>%
+# )  %>%
 #   mutate(pct_black=100*(value/summary_value),
 #         new_Name = sub(" County, Nsorth Carolina", "", NAME),
-#         Year=2020) 
-#
-#
-#final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg,NC_Asian_2020_bg ) %>%
+#         Year=2020)
+# 
+# NC_Income <- get_acs(
+#  geography="block group",
+#  variables= "B19301_001", #Median Income per Capita in 2019 Inflation Adjusted Dollars
+#  state="NC",
+#  year=2019,
+#  geometry=TRUE,
+# )  %>%
+#   mutate(
+#         new_Name = sub(" County, Nsorth Carolina", "", NAME),
+#         Year=2020)
+# 
+# 
+# 
+# final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg,NC_Asian_2020_bg ) %>%
 #  select(GeoID, Name, pct_black, pct_hispanic, pct_white, pct_asian, HH_Vacant, geometry) %>%
 #  mutate(pct_other = 100 - (pct_black + pct_white + pct_asian))
-#
-#temp <- st_transform(final_bgs, st_crs(nc_congressional_2019)) %>% st_make_valid()
+# 
+# 
+# 
+# temp <- st_transform(final_bgs, st_crs(congress_2019)) %>% st_make_valid()
+# 
+# 
+# centroids <- final_bgs %>%
+#   st_point_on_surface() %>%
+#   st_join(NC_Income %>%select(estimate)) %>%
+#   mutate(Med_Income = estimate)
+
 
 
 ## Tag the block level exported as centroids, to the congressional district; note this takes approximately 4-6 hours
@@ -278,7 +301,7 @@ map
 
 
 
-temp <- st_transform(centroids, st_crs(nc_congressional_2021)) %>% st_make_valid()
+# temp <- st_transform(centroids, st_crs(nc_congressional_2021)) %>% st_make_valid()
 
 
 
@@ -826,21 +849,34 @@ More interestingly, the average black population increased for democrats by 1.6 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
+
+
+centroids$Med_income_log <- case_when(
+  centroids$MD_INCM == 0 ~ 0,
+  centroids$MD_INCM > 0 ~ log(centroids$MD_INCM))
+
 ## 2019 
 temp <- centroids %>%
   st_drop_geometry() %>%
-  group_by(PARTY_2019) %>%
+  mutate(`PARTY 2019` = case_when(
+    PARTY_2019 == 0 ~ "Republican",
+    PARTY_2019 == 1 ~ "Democrat"
+  )) %>%
+  group_by(`PARTY 2019`) %>%
   summarize(Mean_white = mean(PCT_WHT, na.rm=T),
             Mean_black = mean(PCT_BLC, na.rm=T),
-            Mean_hispanic = mean(PCT_HSP, na.rm=T))
-          #  Mean_asian = mean(pct_asian, na.rm=T))
+            Mean_hispanic = mean(PCT_HSP, na.rm=T),
+            Mean_asian = mean(PCT_ASN, na.rm=T),
+            Mean_inc = mean(MD_INCM, na.rm=T))
 
 library(DT)
 
 datatable(temp, caption = "Average Racial Breakdown by 2019 Congressional Representation") %>%
   formatRound('Mean_white', 3) %>%
- formatRound('Mean_black', 3) %>%
- formatRound('Mean_hispanic', 3) 
+  formatRound('Mean_black', 3) %>%
+  formatRound('Mean_hispanic', 3) %>%
+  formatRound('Mean_asian', 3) %>%
+  formatRound('Mean_inc',2)
 
 ## 2020
 
@@ -853,15 +889,18 @@ temp <- centroids %>%
   group_by(`PARTY 2021`) %>%
   summarize(Mean_white = mean(PCT_WHT, na.rm=T),
             Mean_black = mean(PCT_BLC, na.rm=T),
-            Mean_hispanic = mean(PCT_HSP, na.rm=T))
-           # Mean_asian = mean(pct_asian, na.rm=T))
+            Mean_hispanic = mean(PCT_HSP, na.rm=T),
+            Mean_asian = mean(PCT_ASN, na.rm=T),
+            Mean_inc = mean(MD_INCM, na.rm=T))
 
 library(DT)
 
 datatable(temp, caption = "Average Racial Breakdown by 2021 Congressional Representation") %>%
   formatRound('Mean_white', 3) %>%
- formatRound('Mean_black', 3) %>%
- formatRound('Mean_hispanic', 3) 
+  formatRound('Mean_black', 3) %>%
+  formatRound('Mean_hispanic', 3) %>%
+  formatRound('Mean_asian', 3) %>%
+  formatRound('Mean_inc',2)
 ```
 
 
@@ -904,7 +943,7 @@ test <- centroids[177479:236638,]
 
 ### 2019 Model Outputs
 
-model_2019_blocks <- glm(PARTY_2019_var ~PCT_HSP + PCT_WHT + PCT_BLC ,family=binomial(link='logit'),data=train)
+model_2019_blocks <- glm(PARTY_2019 ~PCT_HSP + PCT_WHT + PCT_BLC + PCT_ASN + Med_income_log ,family=binomial(link='logit'),data=train)
 
 summary(model_2019_blocks)
 
@@ -919,7 +958,7 @@ summary(model_2019_blocks)
 ### 2021 Model Outputs
 
 
-model_2021 <- glm(PARTY_2021 ~PCT_HSP + PCT_WHT + PCT_BLC ,family=binomial(link='logit'),data=train)
+model_2021 <- glm(PARTY_2021 ~PCT_HSP + PCT_WHT + PCT_BLC + PCT_ASN + Med_income_log ,family=binomial(link='logit'),data=train)
 
 summary(model_2021)
 
@@ -935,7 +974,7 @@ summary(model_2021)
 
 
 
-ggplot(test, aes(x=PCT_BLC, y=PARTY_2019_var)) + geom_point(fill='red') + 
+ggplot(test, aes(x=PCT_BLC, y=PARTY_2019)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Black")
 
@@ -944,7 +983,7 @@ ggplot(test, aes(x=PCT_BLC, y=PARTY_2021)) + geom_point() +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Black")
 
 
-ggplot(test, aes(x=PCT_WHT, y=PARTY_2019_var)) + geom_point(fill='red') + 
+ggplot(test, aes(x=PCT_WHT, y=PARTY_2019)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts White")
 
@@ -953,13 +992,22 @@ ggplot(test, aes(x=PCT_WHT, y=PARTY_2021)) + geom_point() +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts White")
 
 
-ggplot(test, aes(x=PCT_HSP, y=PARTY_2019_var)) + geom_point(fill='red') + 
+ggplot(test, aes(x=PCT_HSP, y=PARTY_2019)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Hispanic")
 
-ggplot(test, aes(x=PCT_HSP, y=PARTY_2021)) + geom_point() + 
+ggplot(test, aes(x=PCT_HSP, y=PARTY_2019)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Hispanic")
+
+
+ggplot(test, aes(x=PCT_ASN, y=PARTY_2019)) + geom_point(fill='red') + 
+  stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
+  scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Asian")
+
+ggplot(test, aes(x=PCT_ASN, y=PARTY_2019)) + geom_point() + 
+  stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
+  scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Asian")
 
 
 
@@ -985,6 +1033,8 @@ Predictive fit of model using 2019 congressional districts, this tells us how ac
 ## Predictive Fits
 
 pred <- predict(model_2019_blocks, newdata = test, type = "response")
+
+pred <- pred %>% filter(!is.na(pred))
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
@@ -1047,14 +1097,14 @@ exp(cbind(OR = coef(model_2021), confint(model_2021)))
 Finally, the odds ratios below show that 2021 lines are more fair to black North Carolinians. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-boxLabels = c("Hispanic", "White", "Black")
+boxLabels = c("Hispanic", "White", "Black", "Asian", "Log Median Income")
 
 ##2019
 
 
-df <- data.frame(lables=boxLabels, boxOdds = c(1.0014089 , 
-0.9951015 , 1.0172783), boxCILow = c(1.0007630 , 0.9948121 ,1.0168304), 
-                        boxCIHigh = c(1.0020531, 0.9953909, 1.0177270))
+df <- data.frame(lables=boxLabels, boxOdds = c(1.0021304779   , 
+0.9934778163  , 1.0200081806 ,1.0312674226  ,2.0259539656  ), boxCILow = c(1.0014661525    , 0.9931773600   ,1.0195372923 ,1.0295998976  ,1.9723423285   ), 
+                        boxCIHigh = c(1.002793072, 0.993778233, 1.020480101,1.032950946,2.081119204))
 
 p <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
 
