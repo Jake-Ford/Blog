@@ -955,7 +955,7 @@ summary(model_2021)
 
 
 
-a <- ggplot(test, aes(x=PCT_BLC, y=PARTY_2019)) + geom_point(color='red') + 
+ggplot(test, aes(x=PCT_BLC, y=PARTY_2019)) + geom_point(color='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Black")
 
