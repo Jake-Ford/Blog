@@ -978,7 +978,7 @@ Hispanics are being newly represented as well, as the likelihood across the dist
 ## Model Fits
 
 
-Predictive fit of model using 2019 congressional districts, this tells us how accurate the supervised regression model performs. For   
+Predictive fit of model using 2019 congressional districts, this tells us how accurate the supervised regression model performs. For 2019, the machine learning model was able to accurate predict at this rate: 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -998,7 +998,7 @@ mean(y_pred == y_act, na.rm=T)
 ```
 
 
-Predictive fit of model using 2021 congressional districts: 
+Whereas the 2021 model was able to increase it to: 
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -1020,7 +1020,7 @@ mean(y_pred == y_act, na.rm=T)
 ```
 
 
-
+This doesn't prove racial gerrymandering. It could reflect the 'Big Sort' occuring over ten years, or carpet-baggers like yours truly coming down South with our big liberal/socialist agenda, congregating in big cities which may intersect with growing political sorting happening more broadly. Nonetheless, the model results for the 2021 lines are encouraging. 
 
 
 
