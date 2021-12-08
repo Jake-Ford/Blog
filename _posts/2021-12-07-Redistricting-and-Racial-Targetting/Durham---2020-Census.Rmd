@@ -831,10 +831,6 @@ county_map
 
 ```
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
-library("distill")
-rename_post_dir("_posts/2021-10-05-the-sharpe-ratio", slug="Racial Targetting in Redistricting ")
-```
 
 
 ### Race by Representative
