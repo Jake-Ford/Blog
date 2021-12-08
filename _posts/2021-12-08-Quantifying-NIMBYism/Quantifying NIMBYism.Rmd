@@ -46,15 +46,14 @@ vars_2019 <- load_variables(2019,"acs5", cache=TRUE)
 
 
 
-##Hispanic = P004003 in 2010; P2_002N in 2020; B03001_003 in 2019 ACS
 
-## Black (black alone) 	P003003 in 2010 P1_004N in 2020
-
-nc_congressional_2019 <- st_read("C:\Users\JacobFo\OneDrive - City of Durham\GitHub\Personal Blog\Personal Blog\_posts\2021-12-08-Quantifying-NIMBYism\Zoning.shp")
+zones <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/_posts/2021-12-08-Quantifying-NIMBYism/Zoning.shp")
 
 
 
+summary(zones)
 
+table(zones$ZONE_GEN)
 
 
 ```
@@ -71,6 +70,8 @@ nc_congressional_2019 <- st_read("C:\Users\JacobFo\OneDrive - City of Durham\Git
 1. https://medium.com/@NYUurbanlab/actually-nimbys-cities-arent-building-enough-51806be038ae
 2. https://abundanthousingla.org/meet-l-a-countys-biggest-nimbys/
 3. https://live-durhamnc.opendata.arcgis.com/datasets/zoning/explore?location=36.012451%2C-78.920767%2C15.62
+
+4. https://maps.durhamnc.gov/?x=36.01483037908998&y=-78.92072715568013&z=18055.9548215&r=0&b=11&pid=NA&s=zoning&l=active_address_points,countymask,transitionalofficeoverlay,NPO,NHD,LocHistLandmarks,airportoverlay,citylimits,RTPboundary,parcels,zoning,
 
 
 
