@@ -1,0 +1,76 @@
+---
+title: "Quantifying NIMBYism"
+author:
+  - name: Jacob Ford
+    url: https://jford-dchcmpo.github.io/Blog/
+date: 12-08-2021
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+
+
+
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(caliperR)
+library(nngeo)
+library(tcadr)
+library(sf)
+library(leaflet)
+library(PL94171)
+library(janitor)
+library(dplyr)
+library(tidycensus)
+library(tidyverse)
+options(tigris_use_cache = TRUE)
+library(sf)
+library(data.table)
+library(dplyr)
+library(plotly)
+
+# remotes::install_github("walkerke/tidycensus")
+# remotes::install_github("walkerke/tigris")
+library(tidycensus)
+library(tidyverse)
+library(tigris)
+
+vars_2020 <- load_variables(2020,"pl",cache=TRUE)
+vars_2010 <- load_variables(2010,"sf1", cache=TRUE)
+vars_2019 <- load_variables(2019,"acs5", cache=TRUE)
+
+
+
+##Hispanic = P004003 in 2010; P2_002N in 2020; B03001_003 in 2019 ACS
+
+## Black (black alone) 	P003003 in 2010 P1_004N in 2020
+
+nc_congressional_2019 <- st_read("C:\Users\JacobFo\OneDrive - City of Durham\GitHub\Personal Blog\Personal Blog\_posts\2021-12-08-Quantifying-NIMBYism\Zoning.shp")
+
+
+
+
+
+
+```
+ 
+
+
+
+
+
+
+
+## References
+
+1. https://medium.com/@NYUurbanlab/actually-nimbys-cities-arent-building-enough-51806be038ae
+2. https://abundanthousingla.org/meet-l-a-countys-biggest-nimbys/
+3. https://live-durhamnc.opendata.arcgis.com/datasets/zoning/explore?location=36.012451%2C-78.920767%2C15.62
+
+
+
