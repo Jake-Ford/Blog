@@ -81,7 +81,7 @@ As the songbird of our generation Carly Rae Jepson once said, let's cut to the f
 Collapse each zone into residential, commerical/university, and other - comprising municipal buildings, fire stations, schools, etc. 
 
 
-```{r}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 res_words <- paste("RESIDENTIAL", "RES", sep = "|")
 
 commerical_words <- paste("COMMECIAL", "COMMERCIAL", "UNIVERSITY","OFFICE", "INDUST", "MIXED", 'COMPACT',sep = "|")
@@ -133,10 +133,14 @@ zone_map <- leaflet() %>%
 zone_map
 ```
 
-Get your snorkles, we're diving in. 
+## Get your snorkles, we're diving in. 
 
 
-```{r}
+
+
+The Mecca of the South categorizes zoning by the following table, available in the [Durham Comprehensive Plan](https://durhamnc.gov/DocumentCenter/View/9020/2-Land-Use): ![](durham zoning table.PNG)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 temp <- zones %>%
   filter(zone_flag == "Residential")
 
@@ -145,19 +149,83 @@ other_zones <- zones %>%
 
 
 
-res_zones <- res_zones %>%
+res_zones <- temp %>%
   mutate(
     zone_flag = case_when(
-     ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density Res",
-     ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density Res",
-     ZONE_GEN == "RES_HIGH_DENSITY" ~ "Low High Res"
+     ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density",
+     ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density",
+     ZONE_GEN == "RES_HIGH_DENSITY" ~ " High Density"
       )
     )
 
 
 
+pal <- colorFactor(
+  palette='Dark2',
+  domain=res_zones$zone_flag
+)
+
+zone_map <- leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
+  addPolygons(data=res_zones,
+              weight=1,
+              color=~pal(zone_flag),
+              popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
+                          "Detailed Zone:", res_zones$ZONE_GEN)) %>%
+  addLegend(
+    position="bottomright",
+    pal=pal,
+    values=res_zones$zone_flag
+  )
+
+
+zone_map
+
+
 
 ```
+
+
+
+
+
+### Add HHs in from the 2020 Census 
+
+
+
+1. underutilization rate - zoning vs occupied:
+2. NIMBY score: percentage of population living in low density homes (low, med, high)
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
