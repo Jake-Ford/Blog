@@ -76,32 +76,43 @@ table(zones$ZONE_GEN)
 ```
 As you can see, a lot of these can be collapsed. 
 
+As the songbird of our generation Carly Rae Jepson once said, let's cut to the feeling. 
+
+Collapse each zone into residential, commerical/university, and other - comprising municipal buildings, fire stations, schools, etc. 
+
 
 ```{r}
-res_words <- c("RESIDENTIAL", "RES")
+res_words <- paste("RESIDENTIAL", "RES", sep = "|")
 
-commerical_words <- c("COMMECIAL", "COMMERCIAL", "UNIVERSITY","OFFICE", "INDUST", "MIXED", 'COMPACT')
+commerical_words <- paste("COMMECIAL", "COMMERCIAL", "UNIVERSITY","OFFICE", "INDUST", "MIXED", 'COMPACT',sep = "|")
+
+
   
 
 
 
 zones <- zones %>%
   mutate(
-    com_flag = case_when(
-      grepl(commerical_words, ZONE_GEN) ~ 1,
-      ),
-    res_flag=case_when(
-      grepl(res_words, ZONE_GEN) ~ 1,
-        )
+    zone_flag = case_when(
+      grepl(commerical_words, ZONE_GEN) ~ "Commerical",
+     #ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density Res",
+      #ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density Res",
+      #ZONE_GEN == "RES_HIGH_DENSITY" ~ "Low High Res",
+      grepl(res_words, ZONE_GEN) ~ "Residential",
+      TRUE ~ "Other"
+      )
     )
 ```
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
+
+
+
 pal <- colorFactor(
   palette='Dark2',
-  domain=zones$ZONE_GEN
+  domain=zones$zone_flag
 )
 
 zone_map <- leaflet() %>%
@@ -109,16 +120,43 @@ zone_map <- leaflet() %>%
   setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
   addPolygons(data=zones,
               weight=1,
-              color=~pal(ZONE_GEN),
-              popup=paste("Zone Type: ", zones$ZONE_GEN)) %>%
+              color=~pal(zone_flag),
+              popup=paste("Zone Type: ", zones$zone_flag, "<br>",
+                          "Detailed Zone:", zones$ZONE_GEN)) %>%
   addLegend(
     position="bottomright",
     pal=pal,
-    values=zones$ZONE_GEN
+    values=zones$zone_flag
   )
 
 
 zone_map
+```
+
+Get your snorkles, we're diving in. 
+
+
+```{r}
+temp <- zones %>%
+  filter(zone_flag == "Residential")
+
+other_zones <- zones %>%
+  filter(zone_flag != "Residential")
+
+
+
+res_zones <- res_zones %>%
+  mutate(
+    zone_flag = case_when(
+     ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density Res",
+     ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density Res",
+     ZONE_GEN == "RES_HIGH_DENSITY" ~ "Low High Res"
+      )
+    )
+
+
+
+
 ```
 
 

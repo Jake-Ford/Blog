@@ -683,7 +683,7 @@ ggplotly(p)
 Remember all that jazz about North Carolina gaining another seat in Congress? We've seen a disproportionate amount of growth has been caused by minorities, in particular Hispanic and Asians. Guildford County, where Greensboro and nearby Winston Salem reside, saw a net-negative of white population by 2020, but positive growth in each other observed race. In the northeastern part of the state, an economically distressed agricultural sector, negative population growth is observed, mainly contributed by black populace leaving. 
 
 
-
+Click on the top right icon to switch between different races: 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 nc_2010 <- get_decennial(
