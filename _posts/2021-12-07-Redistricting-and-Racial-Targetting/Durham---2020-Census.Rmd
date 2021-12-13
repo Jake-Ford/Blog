@@ -103,7 +103,7 @@ In this, I use geospatial analyses of the newly released census data, using the 
 1. How has NC demographically over last ten years? (hint: a lot)
 2. What demographics are most represented by either major political party? 
 3. Did redistricting cause any particular racial group to increase likelihood of being represented by a particular party?
-4. Why hasn't Mayor-soon-to-be-elect Elaine O'Neil formally changed the name to 'Mecca of the South' yet?  
+4. Why hasn't Mayor Elaine O'Neil formally changed the name to 'Mecca of the South' yet?  
 
 Disclaimer: This is just an exploratory analysis and model, no where near the caliber of aforementioned actual scholars in the game. The model will be described in the below section, which I'm sure could be improved upon or entirely redesigned. But the richness of the data and the shift in representative districts is the important piece to focus on. 
 
@@ -351,9 +351,9 @@ map
 
 ```
 
-Let's zoom out. From 2010 to 2020, North Carolina gained just over 900,000, making it one of six states to gain an additional seat (shout out Montana, Oregon, Colorado, Florida).
+Let's zoom out. From 2010 to 2020, North Carolina gained just over 900,000, making it one of six states to gain an additional seat (shout out Montana, Oregon, Colorado, Florida and Texas).
 
-But the below graph shows a bit more to the story. The Black population stayed relatively constant, while Whites actually decreased. But more surprisingly, Hispanic and Asian populations dramatically increased relative to 2010 values. While only accounting for over 10% of total population, Hispanic growth accounted for a third of the total state population growth that netted an additional seat in the US House. 
+But the below graph shows a bit more to the story. The Black population stayed relatively constant, while Whites actually decreased. But more surprisingly, Hispanic and Asian populations dramatically increased relative to 2010 values. While only accounting for over 10% of total population, **Hispanic growth accounted for a third of the total state population growth that netted an additional seat in the US House**. 
 
 
 
@@ -835,7 +835,7 @@ county_map
 
 ### Race by Representative
 
-Average US House republican district in North Carolina with the old lines was actually less more white compared to the new lines proposed. May be just a natural reflection of white population declining in certain areas (see above map). . 
+The average republican congressional district in North Carolina with the old lines was actually less white compared to the new lines proposed. May be just a natural reflection of white population declining in certain areas (see above map). 
 
 More interestingly, the average black population increased for democrats by 3 percentage points, while Asian and Hispanics in Republican districts remained relatively consistent the Democratic districts saw sharp rises in average representation. Could imply the demographic shifts and the drawing of new lines may result in higher likelihood for minority North Carolinians to be drawn into a democratic district? Not entirely sold yet. Also, the average income for Democratic districts in the new lines are starkly higher than previous. 
 
@@ -1049,7 +1049,7 @@ ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + ge
 
 
 
-This doesn't prove racial gerrymandering. It could reflect the 'Big Sort' occuring over ten years, or carpet-baggers like yours truly coming down South with our big liberal/socialist agenda, congregating in big cities which may intersect with growing political sorting happening more broadly. Nonetheless, the model results for the 2021 lines are encouraging. 
+This doesn't prove racial gerrymandering. It could reflect the 'Big Sort' occuring over ten years, or carpet-baggers like yours truly coming down South with our big liberal/socialist agenda, congregating in big cities which may intersect with growing political sorting happening more broadly. Nonetheless, the model results for the 2021 lines are encouraging, in a sense if we wanted to prove the newly designed lines better choose their voters for their politicans. 
 
 
 
