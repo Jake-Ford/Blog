@@ -3,7 +3,7 @@ title: "North Carolina Redistricting and Demographic Changes"
 author:
   - name: Jacob Ford
     url: https://example.com/norajones
-date: 12-01-2021
+date: 12-21-2021
 output:
   distill::distill_article:
     self_contained: false
