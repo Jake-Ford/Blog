@@ -192,6 +192,11 @@ map
 
 
 
+```{r}
+getwd(
+  
+)
+```
 
 
 
@@ -201,14 +206,28 @@ Summarize black and hispanic representation
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
-NC_Hisp_2020_bg <- get_decennial(
+blocks <- get_decennial(
   geography="block",
-  variables= "P2_002N",
-  summary_var="P2_001N",
+  variables= c(HH="H1_002N", HH_Pop = 'P1_001N'),
+ # summary_var="P2_001N",
   state="NC",
   year=2020,
   geometry=TRUE,
-  #county="Durham"
+  county=counties) 
+
+blocks <- blocks %>%
+  group_by(GEOID, NAME) %>%
+  summarise(HH_Pop = (value[variable=="HH_Pop"]),
+         HH= value[variable=="HH"])
+
+write_sf(blocks, "Full 2020 Census Block.shp")
+
+block_centroids <- blocks %>%
+  st_point_on_surface()
+
+write_sf(block_centroids, "Full 2020 Census Block Centroids.shp")
+  
+  
 )  %>%
    mutate(pct_hispanic=100*(value/summary_value),
          new_Name = sub(" County, Nsorth Carolina", "", NAME),
@@ -358,6 +377,19 @@ map
 
 
 ```
+
+```{r}
+blocks <- get_acs(
+  geography = "block",
+  state="NC",
+  year = 2020,
+  county=counties, 
+  variables = c("P1_001N",
+                "H1_002N"),
+  geometry=TRUE) 
+  
+```
+
 
 
 ### Total State by Race
