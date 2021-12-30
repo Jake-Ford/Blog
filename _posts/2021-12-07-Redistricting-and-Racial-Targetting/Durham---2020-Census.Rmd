@@ -99,6 +99,9 @@ nc_congressional_2021$Pred_Party <- case_when(
 
 
 
+## You can use st_join and tag each census block centroid with the party ID from congressional layer,
+## but it is more efficient to tag in a separate GIS software, then read back in already tagged. Work smarter not harder. 
+
 centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp") %>%
   mutate(PARTY_2019 = P_2019) %>%
   filter(!(is.na(PARTY_2019)))
