@@ -91,18 +91,14 @@ res_words <- paste("RESIDENTIAL", "RES", sep = "|")
 
 commerical_words <- paste("COMMECIAL", "COMMERCIAL", "UNIVERSITY","OFFICE", "INDUST", "MIXED", 'COMPACT',sep = "|")
 
-
   
-
-
-
 zones <- zones %>%
   mutate(
     zone_flag = case_when(
       grepl(commerical_words, ZONE_GEN) ~ "Commerical",
-     #ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density Res",
-      #ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density Res",
-      #ZONE_GEN == "RES_HIGH_DENSITY" ~ "Low High Res",
+      # ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density Res",
+      # ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density Res",
+      # ZONE_GEN == "RES_HIGH_DENSITY" ~ "Low High Res",
       grepl(res_words, ZONE_GEN) ~ "Residential",
       TRUE ~ "Other"
       )
@@ -146,22 +142,24 @@ zone_map
 The Mecca of the South categorizes zoning by the following table, available in the [Durham Comprehensive Plan](https://durhamnc.gov/DocumentCenter/View/9020/2-Land-Use): ![](durham zoning table.PNG)
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-temp <- zones %>%
-  filter(zone_flag == "Residential")
-
-other_zones <- zones %>%
-  filter(zone_flag != "Residential")
 
 
-
-res_zones <- temp %>%
+res_zones <- zones %>%
+  filter(zone_flag == "Residential") %>%
   mutate(
     zone_flag = case_when(
      ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density",
      ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density",
      ZONE_GEN == "RES_HIGH_DENSITY" ~ " High Density"
-      )
+      ),
+    dwell_units = case_when (
+      zone_flag == "Low Density" ~ ACRES * 4, na.rm=T,
+      zone_flag == "Medium Density" ~ ACRES * 9, na.rm=T,
+      zone_flag == "High Density" ~ ACRES * 36, na.rm=T
     )
+    )
+res_zones$dwell_units <- ifelse( zone_flag=="Low Density", res_zones$dwell_units * 4, na.rm=)
+
 
 
 
@@ -177,7 +175,9 @@ zone_map <- leaflet() %>%
               weight=1,
               color=~pal(zone_flag),
               popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
-                          "Detailed Zone:", res_zones$ZONE_GEN)) %>%
+                          "Detailed Zone:", res_zones$ZONE_GEN, "<br>",
+                          "Zoned for ", res_zones$dwell_units, "Dwell Units maximum", "<br>",
+                          "Acres: ", res_zones$ACRES)) %>%
   addLegend(
     position="bottomright",
     pal=pal,

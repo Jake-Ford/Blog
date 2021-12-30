@@ -44,14 +44,18 @@ vars_2020 <- load_variables(2020,"pl",cache=TRUE)
 vars_2010 <- load_variables(2010,"sf1", cache=TRUE)
 vars_2019 <- load_variables(2019,"acs5", cache=TRUE)
 
+trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
 
 
-##Hispanic = P004003 in 2010; P2_002N in 2020; B03001_003 in 2019 ACS
-
-## Black (black alone) 	P003003 in 2010 P1_004N in 2020
 
 nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
 nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
+
+house_old<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_House_2019.shp")
+house_new<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_House_2021.shp")
+
+senate_old<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_Senate_2019.shp")
+senate_new<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_Senate_2021.shp")
 
 nc_congressional_2021$DISTRICT <- as.integer(nc_congressional_2021$DISTRICT)
 
@@ -81,7 +85,8 @@ nc_congressional_2021$Pred_Party <- case_when(
 
 #write_sf(nc_congressional_2021, "nc_congressional_2021_updated.shp")
 
-trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
+
+
 
 centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp") %>%
   mutate(PARTY_2019 = P_2019) %>%
@@ -150,17 +155,29 @@ pal_2021 <- colorFactor(
 
 map <- leaflet(congress_2019) %>%
   addProviderTiles("CartoDB.Positron") %>%
-  addPolygons(data=congress_2019, group="2019",
+  ##Congress
+  addPolygons(data=congress_2019, group="Congress Old",
               popup=paste("Congressional District: ", congress_2019$District, "<br>",
                           "Party: ", congress_2019$sParty, "<br>",
                           "Representative 2019: ", congress_2019$sName),
               weight=1,
               color =~pal(congress_2019$sParty)) %>%
-  addPolygons(data=congress_2021, group="2021",
+  addPolygons(data=congress_2021, group="Congress New",
               popup=paste("Congressional District: ", congress_2021$DISTRICT, "<br>", "Partisan Lean: ", congress_2021$Partisan_Lean ),dashArray="3", color =~pal_2021(congress_2021$color),
               weight=1, fillOpacity =0.5) %>%
   
-  addLayersControl(baseGroups = c("2019", "2021"))
+  ##Senate
+  addPolygons(data=senate_old, group="Senate Old",
+              popup=paste("Senate District: ", senate_old$District, "<br>",
+                          "Party: ", senate_old$sParty, "<br>",
+                          "Representative 2019: ", senate_old$sName),
+              weight=1,
+              color =~pal(senate_old$sParty)) %>%
+  addPolygons(data=senate_new, group="Senate New",
+              popup=paste("Congressional District: ", senate_new$DISTRICT, "<br>" ),dashArray="3", color ='black',
+              weight=1, fillOpacity =0.5) %>%
+  
+  addLayersControl(baseGroups = c("Congress Old", "Congress New", "Senate Old", "Senate New", "House Old", "House New"))
 
 map
 
