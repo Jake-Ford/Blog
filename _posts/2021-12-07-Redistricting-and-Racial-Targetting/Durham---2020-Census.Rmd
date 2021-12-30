@@ -33,6 +33,7 @@ library(sf)
 library(data.table)
 library(dplyr)
 library(plotly)
+library(randomForest)
 
 # remotes::install_github("walkerke/tidycensus")
 # remotes::install_github("walkerke/tigris")
@@ -1206,10 +1207,10 @@ Random Forests are possibly the most widely used ML model. Will the logit model 
 
 The 2021 lines from the logit model showed a better predictive fit, suggesting the political lines are better desigend to predict political outcomes, or in other words, politicians picking voters instead of the reverse. 
 
-In the blow importance plots, you see the variables ranked by predictive strength for the party represented being a Democrat. 
+In the blow importance plots, focus on the mean decrease of accuracy. In 2019, Black percentage was the highest demographic, meaning roughly it was the most important predictor relative to the other demographics. By 2021, Black percentage was dead last. This may mean the lines are so well designed around black populations in the 2021 districts that their statistical power is diluted in a manner. Interesting result nonetheless, as the flip is startlng at first glance. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-library(randomForest)
+
 
 model_data <- centroids %>% 
   select(PARTY_2019,PARTY_2021, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
@@ -1241,6 +1242,9 @@ RF_2021<- randomForest(
 varImpPlot(RF_2021)
 
 ```
+
+Next we measure the predictive accuracy of each model, for the 2019 and 2021 lines. 
+
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
