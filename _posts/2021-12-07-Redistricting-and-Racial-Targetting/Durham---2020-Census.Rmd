@@ -2,8 +2,8 @@
 title: "North Carolina Redistricting and Demographic Changes"
 author:
   - name: Jacob Ford
-    url: https://example.com/norajones
-date: 12-21-2021
+    url: https://jford-dchcmpo.github.io/Blog/posts/2021-12-30-Redistricting-and-Racial-Targetting/
+date: 12-30-2021
 output:
   distill::distill_article:
     self_contained: false
@@ -930,6 +930,8 @@ datatable(temp, caption = "Average Racial Breakdown by 2021 Congressional Repres
   formatRound('Mean_hispanic', 3) %>%
   formatRound('Mean_asian', 3) %>%
   formatRound('Mean_inc',2)
+
+
 ```
 
 
@@ -949,6 +951,7 @@ As mentioned previously there are nearly a quarter million census blocks in Nort
 
 ##Train and Test Data Sets
 
+centroids <- centroids %>% st_drop_geometry()
 train <- centroids[1:177478,]
 test <- centroids[177479:236638,]
 
@@ -1197,6 +1200,50 @@ ggplot(data = df,
 ```
 
 
+## Random Forest 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(randomForest)
+
+model_data <- centroids %>% 
+  select(PARTY_2019,PARTY_2021, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
+model_data$PARTY_2021 <- as.factor(model_data$PARTY_2021)
+model_data$PARTY_2019 <- as.factor(model_data$PARTY_2019)
+
+train <- model_data[1:177478,]
+test <- model_data[177479:236618,]
+
+rf <- randomForest(
+  formula = PARTY_2019 ~ PCT_BLC + PCT_HSP+PCT_WHT+PCT_ASN + Med_income_log,
+  data=train,
+  importance=TRUE
+)
+
+importance(rf)
+varImpPlot(rf)
+
+
+rf<- randomForest(
+  formula = PARTY_2021 ~ PCT_BLC + PCT_HSP+PCT_WHT+PCT_ASN + Med_income_log,
+  data=train,
+  importance=TRUE
+)
+
+importance(rf)
+varImpPlot(rf)
+
+```
+
+
+```{r}
+
+
+library(ROCR)
+
+predction <- predict(rf, newdata=test)
+table(predict, test$PARTY_2021)
+
+```
 
 
 
