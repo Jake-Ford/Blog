@@ -1082,7 +1082,7 @@ df$vals <- round(df$vals, 3)
 
 
 ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + geom_text(aes(label=vals), vjust=-0.25)+
-  xlab("Year")+ylab("Predictive Strength")+theme_minimal()
+  xlab("Year")+ylab("Predictive Strength")+theme_minimal()+ggtitle("Logit Model Accuracy")
 
 
 ```
@@ -1202,6 +1202,10 @@ ggplot(data = df,
 
 ## Random Forest 
 
+Random Forests are possibly the most widely used ML model. Will the logit model results be supported, refuted, or a big collective shrug be the result?
+
+The 2021 lines from the logit model showed a better predictive fit, suggesting the political lines are better desigend to predict political outcomes, or in other words, politicians picking voters instead of the reverse. 
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(randomForest)
 
@@ -1210,55 +1214,86 @@ model_data <- centroids %>%
 model_data$PARTY_2021 <- as.factor(model_data$PARTY_2021)
 model_data$PARTY_2019 <- as.factor(model_data$PARTY_2019)
 
-train <- model_data[1:177478,]
-test <- model_data[177479:236618,]
+samp <- sample(nrow(model_data), 0.8*nrow(model_data))
 
-rf <- randomForest(
+train <- model_data[samp,]
+test <- model_data[-samp,]
+
+RF_2019 <- randomForest(
   formula = PARTY_2019 ~ PCT_BLC + PCT_HSP+PCT_WHT+PCT_ASN + Med_income_log,
   data=train,
   importance=TRUE
 )
 
-importance(rf)
-varImpPlot(rf)
+importance(RF_2019)
+varImpPlot(RF_2019)
 
 
-rf<- randomForest(
+RF_2021<- randomForest(
   formula = PARTY_2021 ~ PCT_BLC + PCT_HSP+PCT_WHT+PCT_ASN + Med_income_log,
   data=train,
   importance=TRUE
 )
 
-importance(rf)
-varImpPlot(rf)
+importance(RF_2021)
+varImpPlot(RF_2021)
 
 ```
 
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
-library(ROCR)
 
-predction <- predict(rf, newdata=test)
-table(predict, test$PARTY_2021)
+p <- predict(RF_2019, newdata=test)
+table(p, test$PARTY_2019)
+
+results <- cbind(p, test$PARTY_2019)
+
+colnames(results) <- c('pred','real')
+results <- as.data.frame(results)
+
+pred_2019 <- sum(p==test$PARTY_2019) / nrow(test)
+
+
+
+
+
+p <- predict(RF_2021, newdata=test)
+table(p, test$PARTY_2021)
+
+results <- cbind(p, test$PARTY_2021)
+
+colnames(results) <- c('pred','real')
+results <- as.data.frame(results)
+
+pred_2021 <- sum(p==test$PARTY_2021) / nrow(test)
+
+
+
+
+
+vals <- c(pred_2019, pred_2021)
+
+df <- data.frame(Year = c('2019', '2021'),vals)
+
+df$vals <- round(df$vals, 3)
+
+
+
+ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + geom_text(aes(label=vals), vjust=-0.25)+
+  xlab("Year")+ylab("Predictive Strength")+theme_minimal()+ggtitle("Random Forest Model Accuracy")
 
 ```
 
 
-
+From the above, the results seen in the prior logit model are improved upon. 90.2% accuracy by 2021, just using income and demograhics. 
 
 ## Conclusion
 
-Going into this post, getting a bit out of hand, I didn't exactly expect to see definitive evidence of black and brown citizens being walled into a different political district. I"m a bit suprised there isn't a clear trend.  The results from this are actually encouraging, perhaps? If I'm allowed to be encouraged by anything in the post COVID-era? 
+Going into this post, getting a bit out of hand, I didn't exactly expect to see definitive evidence of black and brown citizens being walled into a different political district. However, after seeing the results from both models, I'm a bit surprised at the results. The 2021 lines are being challenged in court now, using much more sophisticated methods of analyzing gerrymandering as I mentioned. But these simplified results show that at the very least, demographic and income sorting into political parties is becoming more clear. The chicken or the egg question here is not to be ignored, but my personal opinion is we shouldn't leave the possibility of voters being selected by politicans up to chance. Politicians should always be chosen by voters. North Carolina should follow Michigan's example, establish a commission to fairly redistrict. 
 
-Ways to improve:
 
-- maybe binning the continuous variables would show more definitive results, or quartiles 
-- more explanatory variables such as HH size and Income, can be taken from ACS data and exported as a centroid, tag, same process as used in above
-- i'm sure many, many others. 
-
-Hope you enjoyed!
 
 
 
@@ -1270,6 +1305,8 @@ Hope you enjoyed!
 2. http://r-statistics.co/Logistic-Regression-With-R.html 
 
 3. https://github.com/alarm-redist/redist/
+
+4. Michigan example in NYTimes: https://www.nytimes.com/2021/12/29/us/politics/michigan-congressional-maps.html
 
 
 
