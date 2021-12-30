@@ -1206,6 +1206,8 @@ Random Forests are possibly the most widely used ML model. Will the logit model 
 
 The 2021 lines from the logit model showed a better predictive fit, suggesting the political lines are better desigend to predict political outcomes, or in other words, politicians picking voters instead of the reverse. 
 
+In the blow importance plots, you see the variables ranked by predictive strength for the party represented being a Democrat. 
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(randomForest)
 
@@ -1225,7 +1227,7 @@ RF_2019 <- randomForest(
   importance=TRUE
 )
 
-importance(RF_2019)
+# importance(RF_2019)
 varImpPlot(RF_2019)
 
 
@@ -1235,7 +1237,7 @@ RF_2021<- randomForest(
   importance=TRUE
 )
 
-importance(RF_2021)
+# importance(RF_2021)
 varImpPlot(RF_2021)
 
 ```
@@ -1246,7 +1248,7 @@ varImpPlot(RF_2021)
 
 
 p <- predict(RF_2019, newdata=test)
-table(p, test$PARTY_2019)
+# table(p, test$PARTY_2019)
 
 results <- cbind(p, test$PARTY_2019)
 
@@ -1260,7 +1262,7 @@ pred_2019 <- sum(p==test$PARTY_2019) / nrow(test)
 
 
 p <- predict(RF_2021, newdata=test)
-table(p, test$PARTY_2021)
+# table(p, test$PARTY_2021)
 
 results <- cbind(p, test$PARTY_2021)
 
