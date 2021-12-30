@@ -1296,7 +1296,7 @@ ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + ge
 ```
 
 
-From the above, the results seen in the prior logit model are improved upon. 90.2% accuracy by 2021, just using income and demograhics. 
+From the above, the results seen in the prior logit model are improved upon. 90.2% accuracy by 2021, just using income and demographics to correctly identify party representation. In each model, the new lines are clearly seen as an improvement on the ability to predict party representation. 
 
 ## Conclusion
 
