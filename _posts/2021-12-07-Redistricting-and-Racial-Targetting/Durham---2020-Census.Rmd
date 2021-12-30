@@ -48,7 +48,8 @@ trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2
 
 
 
-nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp")
+nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp") 
+
 nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
 
 house_old<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_House_2019.shp")
@@ -58,6 +59,17 @@ senate_old<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal
 senate_new<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_Senate_2021.shp")
 
 nc_congressional_2021$DISTRICT <- as.integer(nc_congressional_2021$DISTRICT)
+
+
+##Change CRS
+
+
+nc_congressional_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
+nc_congressional_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
+house_old <- st_transform(house_old, st_crs(trm_taz_g2)) %>% st_make_valid()
+house_new <- st_transform(house_new, st_crs(trm_taz_g2)) %>% st_make_valid()
+senate_old <- st_transform(senate_old, st_crs(trm_taz_g2)) %>% st_make_valid()
+senate_new <- st_transform(senate_new, st_crs(trm_taz_g2)) %>% st_make_valid()
 
 
 
@@ -82,8 +94,6 @@ nc_congressional_2021$Pred_Party <- case_when(
         nc_congressional_2021$Partisan_Lean > 2 ~ 1
          
 )
-
-#write_sf(nc_congressional_2021, "nc_congressional_2021_updated.shp")
 
 
 
@@ -114,10 +124,10 @@ Disclaimer: This is just an exploratory analysis and model, no where near the ca
 
 
 
-## I choose you (gerry)-mander! 
+## Redistricting
 
 
-In the below map, you'll find both sets of US House district lines, what I'll call the 2019 and the 2021. The 2019 districts are shaded by party. The 2021 are shaded by FiveThirtyEight's [Partisan Lean](https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/) for North Carolina's new districts. Note: these lines are facing legal challenges, but so far have survived the gauntlet. 
+In the below map, you'll find both sets of US House district lines, what I'll call the 2019 (old) and the 2021(new). The 2019 districts are shaded by party. The 2021 are shaded by FiveThirtyEight's [Partisan Lean](https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/) for North Carolina's new districts. Note: these lines are facing legal challenges, but so far have survived the gauntlet. State senate and house districts are likewise provided, however I did not go ahead and predict the outcomes. Shapefiles are available on [NC OneMap](https://www.nconemap.gov/)
 
 For the model preparation, I assume the predictions by *heads bow* Nate Silver and his team of god-fearing data wonks hold true, meaning the 2022 midterm elections follow the partisan lean exactly. This may likely be generous for Democrats, as the newly drawn 2nd District, where my own represenative in Congress GK Butterfield leaves a vacant seat, is just slightly in their favor at +1 D's. In this case, the North Carolina 2nd goes to the Republicans despite the +1 D advantage, deal with it. 
 
@@ -170,16 +180,26 @@ map <- leaflet(congress_2019) %>%
   addPolygons(data=senate_old, group="Senate Old",
               popup=paste("Senate District: ", senate_old$District, "<br>",
                           "Party: ", senate_old$sParty, "<br>",
-                          "Representative 2019: ", senate_old$sName),
+                          "Senator 2019: ", senate_old$sFirstName, " ", senate_old$sLastName),
               weight=1,
               color =~pal(senate_old$sParty)) %>%
   addPolygons(data=senate_new, group="Senate New",
-              popup=paste("Congressional District: ", senate_new$DISTRICT, "<br>" ),dashArray="3", color ='black',
-              weight=1, fillOpacity =0.5) %>%
+              popup=paste("Congressional District: ", senate_new$District, "<br>" ),dashArray="3", color ='black',
+              weight=2, fillOpacity =0) %>%
+  ##House
+  addPolygons(data=house_old, group="House Old",
+              popup=paste("House District: ", house_old$District, "<br>",
+                          "Party: ", house_old$sParty, "<br>",
+                          "Representative 2019: ",  house_old$sFirstName, " ", house_old$sLastName),
+              weight=1,
+              color =~pal(house_old$sParty)) %>%
+  addPolygons(data=house_new, group="House New",
+              popup=paste("Congressional District: ", house_new$District, "<br>" ),dashArray="3", color ='black',
+              weight=2, fillOpacity =0) %>%
   
-  addLayersControl(baseGroups = c("Congress Old", "Congress New", "Senate Old", "Senate New", "House Old", "House New"))
+  addLayersControl(overlayGroups = c("Congress Old", "Congress New", "Senate Old", "Senate New", "House Old", "House New"))
 
-map
+map %>% hideGroup("Congress New")%>% hideGroup("Senate New")%>% hideGroup("House New")%>% hideGroup("Senate Old") %>% hideGroup("House Old")
 
 
 
@@ -191,7 +211,7 @@ map
 
 
 
-## EDA
+## Census & Demographic Changes
 
 
 
