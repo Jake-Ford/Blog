@@ -3,7 +3,7 @@ title: "Quantifying NIMBYism"
 author:
   - name: Jacob Ford
     url: https://jford-dchcmpo.github.io/Blog/
-date: 1-06-2021
+date: 01-06-2021
 output:
   distill::distill_article:
     self_contained: false
@@ -86,30 +86,46 @@ Durham's zoning data is publicly available, and is classified in an understandab
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 table(zones$ZONE_GEN)
 ```
-As you can see, a lot of these can be collapsed. 
+
 
 As the songbird of our generation Carly Rae Jepson once said, let's cut to the feeling. 
 
-Collapse each zone into residential, commerical/university, and other - comprising municipal buildings, fire stations, schools, etc. 
+Collapse each zone into residential, commerical/university, and other - comprising municipal buildings, fire stations, schools, etc. A challenge is determining what exactly "Residential High Density" means compared to "Low Density". The below table from the previous [Durham Comprehensive Plan](https://durhamnc.gov/DocumentCenter/View/9020/2-Land-Use) shows the below table, which we will use to approximate dwell units permitted on each type of zone. Downtown zones in the 'High' Density have a hilarious "unlimited" density limit, so I'm expecting a new Burj Khalifa sooner rather than later with that type of free reign. 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+
+
+![](durham zoning table.PNG)
+
+After collapsing, we get the following reduced zones below. The interactive map shows these three broad categories for the whole county. For those of you not familiar with the Mecca of the South, that pinkish red section is Duke University and Duke Hospital. 
+
+Most of the county is zoned residential, which makes sense. Commerical zones mainly follow along the major highway corridor NC 147 and I-40, along with smatterings here and there. But what this map does not show is what type of residential zones these represent.  
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 res_words <- paste("RESIDENTIAL", "RES", sep = "|")
 
 commerical_words <- paste("COMMECIAL", "COMMERCIAL", "UNIVERSITY","OFFICE", "INDUST", "MIXED", 'COMPACT',sep = "|")
+
+downtown_words <- paste("DOWNTOWN")
 
   
 zones <- zones %>%
   mutate(
     zone_flag = case_when(
+      grepl("COMPACT", ZONE_GEN) ~ "Compact",
+      is.na(ZONE_GEN) ~ "University",
+      grepl(downtown_words, ZONE_GEN) ~ "Downtown",
       grepl(commerical_words, ZONE_GEN) ~ "Commerical",
-      # ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density Res",
-      # ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density Res",
-      # ZONE_GEN == "RES_HIGH_DENSITY" ~ "Low High Res",
       grepl(res_words, ZONE_GEN) ~ "Residential",
+      
       TRUE ~ "Other"
       )
     )
+
+
+table(zones$zone_flag)
 ```
 
 
@@ -146,33 +162,37 @@ zone_map
 
 
 
-The Mecca of the South categorizes zoning by the following table, available in the [Durham Comprehensive Plan](https://durhamnc.gov/DocumentCenter/View/9020/2-Land-Use): ![](durham zoning table.PNG)
+The Mecca of the South categorizes zoning by the following table, available in the [Durham Comprehensive Plan](https://durhamnc.gov/DocumentCenter/View/9020/2-Land-Use): 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
-
 res_zones <- zones %>%
-  filter(zone_flag == "Residential") %>%
+  filter(zone_flag == "Residential" | zone_flag=="Compact") %>%
   mutate(
-    zone_flag = case_when(
+    density = case_when(
+     ZONE_GEN == "RES_RURAL_DENSITY" ~ "Rural Density",
      ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density",
      ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density",
-     ZONE_GEN == "RES_HIGH_DENSITY" ~ " High Density"
+     ZONE_GEN == "RES_HIGH_DENSITY" ~ " High Density",
+     grepl("COMPACT", ZONE_GEN) ~ "Compact"
       ),
     dwell_units = case_when (
-      zone_flag == "Low Density" ~ ACRES * 4, na.rm=T,
-      zone_flag == "Medium Density" ~ ACRES * 9, na.rm=T,
-      zone_flag == "High Density" ~ ACRES * 36, na.rm=T
+      density == "Rural Density" ~ ACRES * 0.75,
+      density == "Low Density" ~ ACRES * 4,
+      density == "Medium Density" ~ ACRES * 9,
+      density == "High Density" ~ ACRES * 36,
+      density == "Compact" ~ ACRES * 75
     )
     )
-res_zones$dwell_units <- ifelse( zone_flag=="Low Density", res_zones$dwell_units * 4, na.rm=)
 
 
 
+bins<-c(0,25,50,100,200,500,1000,2000,5000)
 
-pal <- colorFactor(
-  palette='Dark2',
-  domain=res_zones$zone_flag
+pal <- colorBin(
+  palette='BuPu',
+  bins=bins,
+  domain=res_zones$dwell_units
 )
 
 zone_map <- leaflet() %>%
@@ -180,7 +200,7 @@ zone_map <- leaflet() %>%
   setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
   addPolygons(data=res_zones,
               weight=1,
-              color=~pal(zone_flag),
+              color=~pal(dwell_units),
               popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
                           "Detailed Zone:", res_zones$ZONE_GEN, "<br>",
                           "Zoned for ", res_zones$dwell_units, "Dwell Units maximum", "<br>",
@@ -188,7 +208,7 @@ zone_map <- leaflet() %>%
   addLegend(
     position="bottomright",
     pal=pal,
-    values=res_zones$zone_flag
+    values=res_zones$dwell_units
   )
 
 
