@@ -283,8 +283,8 @@ NC_HH_2020_bg <- get_decennial(
 centroids <- NC_HH_2020_bg %>%
   st_drop_geometry() 
 
-temp <- res_zones %>%
-  st_join(centroids )
+# temp <- res_zones %>%
+#   st_join(centroids )
 
 
 ```
