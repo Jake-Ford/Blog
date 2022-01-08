@@ -248,7 +248,9 @@ zone_map
 
 
 
-### Add HHs in from the 2020 Census 
+### Heaping Cup of Demographic Data
+
+I wonder how many people and households reside in the variety of zones, and how has that changed? Are zones meeting the explosion of demand in Durham? 
 
 Idea is to tag each zone with the actual number of HH's to get a ratio 
 
@@ -267,29 +269,63 @@ vars_2010 <- load_variables(2010,"sf1", cache=TRUE)
 vars_2019 <- load_variables(2019,"acs5", cache=TRUE)
 
 
+##Get 2020 Census Data
 
-NC_HH_2020_bg <- get_decennial(
+HH_2020_bg <- get_decennial(
  geography="block",
- variables= "H1_001N", ## note represents all HH's - occupied + vacant
+ variables= c(HH="H1_001N",
+              Pop="P1_001N"), ## note represents all HH's - occupied + vacant
  state="NC",
  year=2020,
  geometry=TRUE,
- #county="Durham"
+ county="Durham"
 )  %>%
   mutate(new_Name = sub(" County, Nsorth Carolina", "", NAME),
-        Year=2020, HH = value) 
+        Year=2020) %>%
+  group_by(GEOID) %>%
+  summarise(HH=value[variable=="HH"],
+            Pop=value[variable=="Pop"])
+
+##Get 2010 Census Data
+
+HH_2010_bg <- get_decennial(
+ geography="block",
+ variables= c(HH="H001001", 
+              Pop="P001001"), ## note represents all HH's - occupied + vacant
+ state="NC",
+ year=2010,
+ geometry=TRUE,
+ county="Durham"
+)  %>%
+  mutate(new_Name = sub(" County, Nsorth Carolina", "", NAME),
+        Year=2010) %>%
+  summarise(HH=value[variable=="HH"],
+            Pop=value[variable=="Pop"])
 
 
-centroids <- NC_HH_2020_bg %>%
-  st_drop_geometry() 
 
-# temp <- res_zones %>%
-#   st_join(centroids )
+
+temp <- HH_2020_bg %>%
+  st_point_on_surface() %>%
+  st_join(res_zones %>% select(density)) %>%
+  st_drop_geometry() %>%
+  filter(!is.na(density)) %>%
+  group_by(density) %>%
+  summarise(HH=sum(HH),
+            Pop=sum(Pop))
+
+
 
 
 ```
 
 
+```{r}
+temp <- HH_2020_bg %>%
+  group_by(GEOID) %>%
+  summarise(HH=value[variable=="HH"],
+            Pop=value[variable=="Pop"])
+```
 
 
 
