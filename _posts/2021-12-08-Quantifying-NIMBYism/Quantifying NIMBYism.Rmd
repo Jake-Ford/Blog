@@ -305,7 +305,7 @@ HH_2010_bg <- get_decennial(
 
 
 
-temp <- HH_2020_bg %>%
+temp_2020 <- HH_2020_bg %>%
   st_point_on_surface() %>%
   st_join(res_zones %>% select(density)) %>%
   st_drop_geometry() %>%
@@ -316,15 +316,23 @@ temp <- HH_2020_bg %>%
 
 
 
+temp_2010 <- HH_2010_bg %>%
+  st_point_on_surface() %>%
+  st_join(res_zones %>% select(density)) %>%
+  st_drop_geometry() %>%
+  filter(!is.na(density)) %>%
+  group_by(density) %>%
+  summarise(HH=sum(HH),
+            Pop=sum(Pop))
+
+
 
 ```
 
 
 ```{r}
-temp <- HH_2020_bg %>%
-  group_by(GEOID) %>%
-  summarise(HH=value[variable=="HH"],
-            Pop=value[variable=="Pop"])
+
+
 ```
 
 
