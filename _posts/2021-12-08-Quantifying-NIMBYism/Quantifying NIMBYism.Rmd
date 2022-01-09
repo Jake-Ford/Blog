@@ -401,12 +401,13 @@ final <- merge(temp_2010, temp_2020) %>%
 
 p <- ggplot(data = final, aes(x=reorder(density, Pop_Growth), y = Pop_Growth)) +
   geom_bar(stat="identity")+scale_y_continuous(label=percent)
-p + xlab('') + ylab("Population Growth, 2010-2020") + theme_minimal()
-
+p <- p + xlab('') + ylab("Population Growth, 2010-2020") + theme_minimal()
+ggplotly(p)
 
 p <- ggplot(data = final, aes(x=reorder(density, HH_Growth), y = HH_Growth)) +
   geom_bar(stat="identity")+scale_y_continuous(label=percent)
-p + xlab('') + ylab("Household Growth, 2010-2020") + theme_minimal()
+p <- p + xlab('') + ylab("Household Growth, 2010-2020") + theme_minimal()
+ggplotly(p)
 
 
 ```
