@@ -442,22 +442,74 @@ Let's tag each zone in Durham with the population and households within the resp
 centroids_2020 <- blocks_2020 %>%
   st_point_on_surface()
 
-temp_2020 <- res_zones %>%
-  st_join(centroids_2020 %>% select(Pop, HH)) %>%
-  st_drop_geometry() %>%
-  filter(!is.na(density)) %>%
-  group_by(density) %>%
-  summarise(HH_2020=sum(HH),
-            Pop_2020 = sum(Pop)) 
+centroids_2010 <- blocks_2010 %>%
+  st_point_on_surface()
+
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+temp <- res_zones %>%
+  st_join(centroids_2020 %>% select(Pop_2020= Pop, 
+                                    HH_2020 = HH)) %>%
+  st_join(centroids_2010 %>% select(Pop_2010 = Pop,
+                                    HH_2010 = HH)) %>%
+  mutate(
+    Pop_Growth = Pop_2020 - Pop_2010,
+    HH_Growth = HH_2020 - HH_2010
+  ) %>%
+  filter(!is.na(HH_Growth)) %>%
+  mutate(
+    NIMBY_Score = (HH_Growth - min(HH_Growth))/(max(HH_Growth)-min(HH_Growth)) )
+    
+## join with original
+
+joined <- cbind(res_zones, temp, by)
+  
 ```
 
 
 
 
+Map new NIMBY score, which is just standardized HH_Growth from 0 - 1
 
 
 
+```{r}
+leaflet()%>%
+  addPolygons(data=temp)
 
+
+bins<-c(0,0.5,0.75,1)
+
+library(RColorBrewer)
+
+pal <- colorBin(
+  palette='RdYlGn',
+  bins=bins,
+  domain=temp$NIMBY_Score
+)
+
+zone_map <- leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
+  addPolygons(data=temp,
+              weight=1,
+              color=~pal(dwell_units),
+              popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
+                          "Detailed Zone:", res_zones$ZONE_GEN, "<br>",
+                          "Zoned for ", res_zones$dwell_units, "Dwell Units maximum", "<br>",
+                          "Acres: ", res_zones$ACRES)) %>%
+  addLegend(
+    position="bottomright",
+    pal=pal,
+    values=res_zones$dwell_units,
+    title="Units/Acre"
+  )
+
+
+zone_map
+
+
+```
 
 
 
