@@ -14,20 +14,17 @@ output:
 
 ## Vapid & Plastic
 
-Take a stroll down any street in Durham, which many on this blog have called the Mecca of the South, and you'll quickly notice the tell-tale sign that you're in a quickly gentrifying area. The signs. 
+Take a stroll down any street in my neighborhood in Durham, which many on this blog have called the Mecca of the South, and you'll quickly notice the tell-tale sign that you're in a quickly gentrifying, liberal leaning area: the lawn signs. 
 
-Black lives matter. Science is Real. Housing is a Human Right. Stop the Steal. 
-
-No, I'm kidding about the last one, at least those aren't prevalent in my neighborhoods. 
-
-These signs are mainly virtue signaling in my opinion. But I'm not here to argue about lawn signs. I do believe that in the broad, middle to upper-middle class Democratic base there is a pervasive hypocrasy when it comes to political priorities they support and the actions that defend and hoard opportunities for others. I was lucky to take a seminar from Richard Reeves of the Brooking Institute on the very subject, and he's written prodigiously regarding this very confluence of virtue signaling and virtue setting. These double-standards are nearly as ubiquitious as the aforementioned lawn signs: university legacy admissions, fiscal policy such as the mortgage interest deduction, 529 plans, estate and sales tax and most recently the absurd SALT deduction - which Reeves argues should be completely eliminated, and house zoning. Democrats are typically focused on demand-centric solutions: example, college is too expensive so increase aid or medical bills are shockingly high, so provide more targetted aid, without addressing more substantial sources of supply inefficiencies or potential expansion for new markets. Zoning is a perfectly apt example, so I wanted to dive into Durham's zoning ordinances. 
-
-I found myself wondering, are Durham zoning laws reflective of a majority Democratic enclave, a quickly growing liberal bubble? 
+Black lives matter. Science is Real. Housing is a Human Right. Stop the Steal. (Just kidding about that last one)
 
 
-Are Durham's zoning ordinances aligned with beliefs of all those stupid lawn signs? 
+These signs are mainly virtue signaling in my opinion. But I'm not here to argue about lawn signs. I do believe that in the broad, middle to upper-middle class Democratic base there is a pervasive hypocrisy when it comes to political priorities espoused (often via lawn ornamentation) and the actions that defend and hoard opportunities for others. I was lucky to take a seminar from Richard Reeves of the Brooking Institute on the very subject, and he's written prodigiously regarding this very confluence of virtue signaling and policy setting. These double-standards are nearly as ubiquitous as the aforementioned lawn signs: university legacy admissions, fiscal policy such as the mortgage interest deduction, 529 plans, estate and sales tax and most recently the absurd SALT deduction - which Reeves argues should be completely eliminated, and house zoning.  
 
-Note: Durham's [Comprehensive Plan](https://engagedurham.com/comprehensive-plan/) is being updated, so zoning ordinances for a county experiencing population explosions is likely to occur. 
+
+I found myself wondering, are Durham zoning laws reflective of a majority Democratic enclave, a quickly growing liberal bubble? Are we, like many other cities in America, zoned predominately for single-family households? And above all, are Durham's zoning ordinances aligned with beliefs of all those stupid lawn signs? 
+
+Note: Durham's [Comprehensive Plan](https://engagedurham.com/comprehensive-plan/) is being updated, so zoning ordinances are likely to occur. 
 
 
 
@@ -77,9 +74,12 @@ zones <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blo
  
 ## EDA 
 
-I've worked in local and state governments for most of my career. Accessing data can get a little complicated or wildly bureaucratic, so we'll make a few assumptions along the way. The question we're trying to answer is to what degree is Durham's zoning amenable to non-single family homes? Most of the new houses getting torn down in my neighborhood are being replaced by gorgeous three story brand-spanking new single family homes. Using 2020 census data, we can determine the percentage of Durham-ites zoned for single or multiple family homes. 
+I wish I could take a time machine back to a younger Jake, complaining about a problem set in his graduate quant class. Oh, is that perfectly cleaned data set provided by the professor annoying to load into your program? Is the codebook too succint? I wouldn't hit this Jake, violence is never the answer, but I would shake him a bit. 
 
-Let me preface also preface this with I am a hard-core YIMBY-er, if you couldn't tell from the previous section...
+The question we're trying to answer is to what degree is Durham's zoning amenable to non-single family homes? Using 2020 census data, we can determine the percentage of Durham-ites zoned for single or multiple family homes. Growth in households and population will be measured based on where that growth is occuring by zone type. First, we need the zone type. 
+
+### Zone Types 
+
 
 Durham's zoning data is publicly available, and is classified in an understandably long-winded manner. Below are the initial zone types: 
 
@@ -90,16 +90,17 @@ table(zones$ZONE_GEN)
 
 As the songbird of our generation Carly Rae Jepson once said, let's cut to the feeling. 
 
-Collapse each zone into residential, commerical/university, and other - comprising municipal buildings, fire stations, schools, etc. A challenge is determining what exactly "Residential High Density" means compared to "Low Density". The below table from the previous [Durham Comprehensive Plan](https://durhamnc.gov/DocumentCenter/View/9020/2-Land-Use) shows the below table, which we will use to approximate dwell units permitted on each type of zone. Downtown zones in the 'High' Density have a hilarious "unlimited" density limit, so I'm expecting a new Burj Khalifa sooner rather than later with that type of free reign. 
+Let's collapse each zone into broad buckets: residential, commercial, university, downtown and compact. The last two will be treated nearly identically. Compact is a newer designed zone theorized to increase density, multimodal traffic like transit and bike lanes, and allow access to work and play in and around Durham. 
+
+
+The below table from the previous [Durham Comprehensive Plan](https://durhamnc.gov/DocumentCenter/View/9020/2-Land-Use) shows the below table, which we will use to approximate dwell units permitted on each type of zone. Downtown zones in the 'High' Density have a hilarious "unlimited" density limit, so I'm expecting a new Burj Khalifa sooner rather than later with that type of free reign. Note, I will use the median value of the density ranges, but it doesn't matter too much, as you'll see. 
 
 
 
 
 ![](durham zoning table.PNG)
 
-After collapsing, we get the following reduced zones below. The interactive map shows these three broad categories for the whole county. For those of you not familiar with the Mecca of the South, that pinkish red section is Duke University and Duke Hospital. 
-
-Most of the county is zoned residential, which makes sense. Commerical zones mainly follow along the major highway corridor NC 147 and I-40, along with smatterings here and there. But what this map does not show is what type of residential zones these represent.  
+After collapsing, we get the following reduced zones below.  
 
 
 
@@ -127,7 +128,7 @@ zones <- zones %>%
 
 table(zones$zone_flag)
 ```
-
+The interactive map shows these collapsed categories for the whole county. Most of the county is zoned residential, which makes sense. Commercial zones mainly follow along the major highway corridor NC 147 and I-40, along with smatterings here and there. The compact zones are relatively concentrated just north of Duke's main campus. There are a number of condos and apartment buildings, a few hotels even, in that zone. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -157,38 +158,41 @@ zone_map <- leaflet() %>%
 zone_map
 ```
 
-## Get your snorkles, we're diving in. 
+## Max Dwell Units by Zone
+
+Following the table shown above, the max dwell units by zone type are shown. University zones are removed for simplicity. 
 
 
-
-
-The Mecca of the South categorizes zoning by the following table, available in the [Durham Comprehensive Plan](https://durhamnc.gov/DocumentCenter/View/9020/2-Land-Use): 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 res_zones <- zones %>%
-  filter(zone_flag == "Residential" | zone_flag=="Compact") %>%
-  filter(ZONE_GEN != "RESEARCH") %>%
+#  filter(zone_flag == "Residential" | zone_flag=="Compact") %>%
+ # filter(ZONE_GEN != "RESEARCH") %>%
   mutate(
     density = case_when(
      grepl("RURAL", ZONE_GEN)  ~ "Rural Density",
      ZONE_GEN == "RES_LOW_DENSITY" ~ "Low Density",
      ZONE_GEN == "RES_MEDIUM_DENSITY" ~ "Medium Density",
      ZONE_GEN == "RES_HIGH_DENSITY" ~ "High Density",
-     grepl("COMPACT", ZONE_GEN) ~ "Compact"
+     grepl("COMPACT", ZONE_GEN) ~ "Compact",
+     grepl("DOWNTOWN", ZONE_GEN) ~ "Downtown"
       ),
     dwell_units = case_when (
-      density == "Rural Density" ~ ACRES * 0.75,
-      density == "Low Density" ~ ACRES * 4,
-      density == "Medium Density" ~ ACRES * 9,
-      density == "High Density" ~ ACRES * 36,
-      density == "Compact" ~ ACRES * 75
+      density == "Rural Density" ~  0.75,
+      density == "Low Density" ~  4,
+      density == "Medium Density" ~  9,
+      density == "High Density" ~ 36,
+      density == "Compact" ~ 75,
+      density == "Downtown" ~ 75
     )
     )
 
 
 
-bins<-c(0,50,100,250,500,1000,2000,5000, 10000, 50000)
+#bins<-c(0,50,100,250,500,1000,2000,5000, 10000, 50000)
+bins<-c(0,1,4,9,36,75)
+
 library(RColorBrewer)
 
 pal <- colorBin(
@@ -210,7 +214,8 @@ zone_map <- leaflet() %>%
   addLegend(
     position="bottomright",
     pal=pal,
-    values=res_zones$dwell_units
+    values=res_zones$dwell_units,
+    title="Units/Acre"
   )
 
 
@@ -218,27 +223,27 @@ zone_map
 
 
 
-pal <- colorFactor(
-  palette='Dark2',
-  domain=zones$density
-)
-
-zone_map <- leaflet() %>%
-  addProviderTiles("CartoDB.Positron") %>%
-  setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
-  addPolygons(data=res_zones,
-              weight=1,
-              color=~pal(density),
-              popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
-                          "Detailed Zone:", res_zones$ZONE_GEN)) %>%
-  addLegend(
-    position="bottomright",
-    pal=pal,
-    values=res_zones$density
-  )
-
-
-zone_map
+# pal <- colorFactor(
+#   palette='Dark2',
+#   domain=zones$density
+# )
+# 
+# zone_map <- leaflet() %>%
+#   addProviderTiles("CartoDB.Positron") %>%
+#   setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
+#   addPolygons(data=res_zones,
+#               weight=1,
+#               color=~pal(density),
+#               popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
+#                           "Detailed Zone:", res_zones$ZONE_GEN)) %>%
+#   addLegend(
+#     position="bottomright",
+#     pal=pal,
+#     values=res_zones$density
+#   )
+# 
+# 
+# zone_map
 
 
 
@@ -250,13 +255,17 @@ zone_map
 
 ### Heaping Cup of Demographic Data
 
-I wonder how many people and households reside in the variety of zones, and how has that changed? Are zones meeting the explosion of demand in Durham? 
+The question we want to answer: how many people and households reside in the variety of zones, and how has that changed? Are zones meeting the explosion of demand in Durham? 
 
 Idea is to tag each zone with the actual number of HH's to get a ratio 
 
 
 1. underutilization rate - zoning vs occupied:
 2. NIMBY score: percentage of population living in low density homes (low, med, high)
+
+Using the 2020 and 2010 census data, with some geospatial data science stacks, we can tag each residential zone type with the sum of households and total population represented. 
+
+The first two graphs show these results. The majority of the population in Durham County lives in low density zones, nearly a third of the total population. Downtown and Compact combined represented 11,000 population in 2020, which more than doubled compared to 2010. Households follow a similar trend. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -375,6 +384,16 @@ ggplotly(p)
 
 
 
+
+
+
+```
+The second set of graphs show the percent increase from 2010 to 2020 for each zone. Compact and Downtown saw a dramatically higher increase. These are encouraging results for these newer designed zones. 
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
 temp_2020 <- blocks_2020 %>%
   st_point_on_surface() %>%
   st_join(res_zones %>% select(density)) %>%
@@ -408,17 +427,29 @@ p <- ggplot(data = final, aes(x=reorder(density, HH_Growth), y = HH_Growth)) +
   geom_bar(stat="identity")+scale_y_continuous(label=percent)
 p <- p + xlab('') + ylab("Household Growth, 2010-2020") + theme_minimal()
 ggplotly(p)
-
-
 ```
+
+
+## NIMBY Score
+
+Let's develop a super simple quantitative measure for NIMBY-ism. 
+
+
+Let's tag each zone in Durham with the population and households within the respective zone. We will then be able to see how housing supply changed from 2010 to 2020. 
 
 
 ```{r}
+centroids_2020 <- blocks_2020 %>%
+  st_point_on_surface()
 
-
+temp_2020 <- res_zones %>%
+  st_join(centroids_2020 %>% select(Pop, HH)) %>%
+  st_drop_geometry() %>%
+  filter(!is.na(density)) %>%
+  group_by(density) %>%
+  summarise(HH_2020=sum(HH),
+            Pop_2020 = sum(Pop)) 
 ```
-
-
 
 
 
