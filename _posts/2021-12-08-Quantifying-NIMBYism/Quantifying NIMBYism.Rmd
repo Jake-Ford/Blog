@@ -158,13 +158,12 @@ zone_map <- leaflet() %>%
 zone_map
 ```
 
-## Max Dwell Units by Zone
-
-Following the table shown above, the max dwell units by zone type are shown. University zones are removed for simplicity. 
 
 
+## Collapsed Zone Density 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
+
 
 res_zones <- zones %>%
 #  filter(zone_flag == "Residential" | zone_flag=="Compact") %>%
@@ -187,6 +186,40 @@ res_zones <- zones %>%
       density == "Downtown" ~ 75
     )
     )
+
+
+pal <- colorFactor(
+  palette='Dark2',
+  domain=res_zones$density
+)
+
+zone_map <- leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
+  addPolygons(data=res_zones,
+              weight=1,
+              color=~pal(density),
+              popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
+                          "Detailed Zone:", res_zones$density, "<br>",
+                          "Zoned for ", res_zones$dwell_units, "Dwell Units maximum", "<br>",
+                          "Acres: ", res_zones$ACRES)) %>%
+  addLegend(
+    position="bottomright",
+    pal=pal,
+    values=res_zones$density
+  )
+
+
+zone_map
+
+```
+
+
+## Max Dwell Units by Zone
+
+Following the table shown above, the max dwell units by zone type are shown. University zones are removed for simplicity. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
 
@@ -223,27 +256,6 @@ zone_map
 
 
 
-# pal <- colorFactor(
-#   palette='Dark2',
-#   domain=zones$density
-# )
-# 
-# zone_map <- leaflet() %>%
-#   addProviderTiles("CartoDB.Positron") %>%
-#   setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
-#   addPolygons(data=res_zones,
-#               weight=1,
-#               color=~pal(density),
-#               popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
-#                           "Detailed Zone:", res_zones$ZONE_GEN)) %>%
-#   addLegend(
-#     position="bottomright",
-#     pal=pal,
-#     values=res_zones$density
-#   )
-# 
-# 
-# zone_map
 
 
 
@@ -253,21 +265,39 @@ zone_map
 
 
 
+
+
+
+
+
+
+
+
+The units/acre map doesn't show too much information, outside of East Durham is likely due for some expanded zoning restrictions. What I find interesting is the collapsed zone density map, the little pockets of high density in Trinity Park, where I walk my dog several times a day and fight the urge to not just allow but actively encourage Charlie the Greyhound to pee on the quarter million dollar McMansion sprouting up between the duplexes and triplexes which are clearly fit in those little pockets of high density zoned plots. 
+
+I'm also kidding, Charlie is far too polite of a pup, and I am not one of those monster dog owners. 
+
+What may help illuminate this is to see how many people are living in these type of zones. 
+
+
 ### Heaping Cup of Demographic Data
 
 The question we want to answer: how many people and households reside in the variety of zones, and how has that changed? Are zones meeting the explosion of demand in Durham? 
 
-Idea is to tag each zone with the actual number of HH's to get a ratio 
-
-
-1. underutilization rate - zoning vs occupied:
-2. NIMBY score: percentage of population living in low density homes (low, med, high)
 
 Using the 2020 and 2010 census data, with some geospatial data science stacks, we can tag each residential zone type with the sum of households and total population represented. 
 
 The first two graphs show these results. The majority of the population in Durham County lives in low density zones, nearly a third of the total population. Downtown and Compact combined represented 11,000 population in 2020, which more than doubled compared to 2010. Households follow a similar trend. 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+
+# Idea is to tag each zone with the actual number of HH's to get a ratio 
+# 
+# 
+# 1. underutilization rate - zoning vs occupied:
+# 2. NIMBY score: percentage of population living in low density homes (low, med, high)
 
 library(tidycensus)
 library(tidyverse)
@@ -388,7 +418,7 @@ ggplotly(p)
 
 
 ```
-The second set of graphs show the percent increase from 2010 to 2020 for each zone. Compact and Downtown saw a dramatically higher increase. These are encouraging results for these newer designed zones. 
+The second set of graphs show the percent increase from 2010 to 2020 for each zone. Compact and Downtown saw a dramatically higher increase. These are encouraging results for these newer designed zones. But these graphs also show how supply is matched with demand in a manner. 
 
 
 
@@ -419,12 +449,12 @@ final <- merge(temp_2010, temp_2020) %>%
          Pop_Growth = (Pop_2020 - Pop_2010)/Pop_2010)
 
 p <- ggplot(data = final, aes(x=reorder(density, Pop_Growth), y = Pop_Growth)) +
-  geom_bar(stat="identity")+scale_y_continuous(label=percent)
-p <- p + xlab('') + ylab("Population Growth, 2010-2020") + theme_minimal()
+  geom_bar(stat="identity")+scale_y_continuous(label=percent)+ ggtitle("Percent Increase, Population")
+p <- p + xlab('') + ylab("Population Growth, 2010-2020") + theme_minimal() 
 ggplotly(p)
 
 p <- ggplot(data = final, aes(x=reorder(density, HH_Growth), y = HH_Growth)) +
-  geom_bar(stat="identity")+scale_y_continuous(label=percent)
+  geom_bar(stat="identity")+scale_y_continuous(label=percent)+ ggtitle("Percent Increase, Households")
 p <- p + xlab('') + ylab("Household Growth, 2010-2020") + theme_minimal()
 ggplotly(p)
 ```
