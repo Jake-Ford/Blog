@@ -418,7 +418,7 @@ ggplotly(p)
 
 
 ```
-The second set of graphs show the percent increase from 2010 to 2020 for each zone. Compact and Downtown saw a dramatically higher increase. These are encouraging results for these newer designed zones. But these graphs also show how supply is matched with demand in a manner. 
+The second set of graphs show the percent increase from 2010 to 2020 for each zone. Compact and Downtown saw a dramatically higher increase. These are encouraging results for these newer designed zones. But these graphs also show how supply is matched with demand in a manner. The Downtown zones saw a dramatic increase, almost twice the growth in supply compared to demand. This doesn't immediately suggest that there is a glut of downtown households available, as the supply very well may have been rushing to meet existing, previous demand. 
 
 
 
@@ -442,25 +442,37 @@ temp_2010 <- blocks_2010 %>%
   filter(!is.na(density)) %>%
   group_by(density) %>%
   summarise(HH_2010=sum(HH),
-            Pop_2010=sum(Pop))
+            Pop_2010= sum(Pop))
 
 final <- merge(temp_2010, temp_2020) %>%
-  mutate(HH_Growth = (HH_2020 - HH_2010)/HH_2010,
-         Pop_Growth = (Pop_2020 - Pop_2010)/Pop_2010)
+  mutate(HH_Growth = (HH_2020- HH_2010)/HH_2010,
+         Pop_Growth = (Pop_2020- Pop_2010)/Pop_2010) %>%
+  select(density, HH_Growth, Pop_Growth)
 
-p <- ggplot(data = final, aes(x=reorder(density, Pop_Growth), y = Pop_Growth)) +
-  geom_bar(stat="identity")+scale_y_continuous(label=percent)+ ggtitle("Percent Increase, Population")
-p <- p + xlab('') + ylab("Population Growth, 2010-2020") + theme_minimal() 
+
+dfm <- pivot_longer(final, -density, names_to="variable", values_to="value")
+
+p <- ggplot(dfm,aes(x = reorder(density, value),y = value)) + 
+    geom_bar(aes(fill = variable),stat = "identity",position = "dodge") +scale_y_continuous(label=percent)+ ggtitle("Supply vs Demand")
+p <- p + xlab('') + ylab("Percentage Increase 2010 to 2020") + theme_minimal()
 ggplotly(p)
 
-p <- ggplot(data = final, aes(x=reorder(density, HH_Growth), y = HH_Growth)) +
-  geom_bar(stat="identity")+scale_y_continuous(label=percent)+ ggtitle("Percent Increase, Households")
-p <- p + xlab('') + ylab("Household Growth, 2010-2020") + theme_minimal()
-ggplotly(p)
+
+
+
+
+
+
+
 ```
 
 
 ## NIMBY Score
+
+Working on this section.....
+
+
+
 
 Let's develop a super simple quantitative measure for NIMBY-ism. 
 
@@ -468,7 +480,7 @@ Let's develop a super simple quantitative measure for NIMBY-ism.
 Let's tag each zone in Durham with the population and households within the respective zone. We will then be able to see how housing supply changed from 2010 to 2020. 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 centroids_2020 <- blocks_2020 %>%
   st_point_on_surface()
 
@@ -482,6 +494,10 @@ temp <- res_zones %>%
                                     HH_2020 = HH)) %>%
   st_join(centroids_2010 %>% select(Pop_2010 = Pop,
                                     HH_2010 = HH)) %>%
+  group_by(OBJECTID) %>%
+  summarize(density = density,
+            Pop_2020=Pop_2020,
+            HH_2020=HH_2020)
   mutate(
     Pop_Growth = Pop_2020 - Pop_2010,
     HH_Growth = HH_2020 - HH_2010
@@ -503,7 +519,7 @@ Map new NIMBY score, which is just standardized HH_Growth from 0 - 1
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 leaflet()%>%
   addPolygons(data=temp)
 
