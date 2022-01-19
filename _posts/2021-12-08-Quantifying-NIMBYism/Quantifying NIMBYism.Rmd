@@ -482,33 +482,39 @@ Let's tag each zone in Durham with the population and households within the resp
 
 ```{r eval=FALSE, include=FALSE}
 centroids_2020 <- blocks_2020 %>%
-  st_point_on_surface()
-
-centroids_2010 <- blocks_2010 %>%
-  st_point_on_surface()
-
-range01 <- function(x){(x-min(x))/(max(x)-min(x))}
-
-temp <- res_zones %>%
-  st_join(centroids_2020 %>% select(Pop_2020= Pop, 
-                                    HH_2020 = HH)) %>%
-  st_join(centroids_2010 %>% select(Pop_2010 = Pop,
-                                    HH_2010 = HH)) %>%
+  st_point_on_surface() %>%
+  st_join(res_zones %>% select(OBJECTID)) %>%
+  st_drop_geometry() %>%
+  filter(!is.na(OBJECTID)) %>%
   group_by(OBJECTID) %>%
-  summarize(density = density,
-            Pop_2020=Pop_2020,
-            HH_2020=HH_2020)
-  mutate(
-    Pop_Growth = Pop_2020 - Pop_2010,
-    HH_Growth = HH_2020 - HH_2010
-  ) %>%
-  filter(!is.na(HH_Growth)) %>%
-  mutate(
-    NIMBY_Score = (HH_Growth - min(HH_Growth))/(max(HH_Growth)-min(HH_Growth)) )
-    
-## join with original
+  summarize(Pop=sum(Pop, na.rm=T),
+            HH=sum(HH, na.rm=T)) 
 
-joined <- cbind(res_zones, temp, by)
+joined <- merge(res_zones, centroids_2020, by=c("OBJECTID")) %>%
+  filter(!is.na(ACRES) & ACRES > 0)
+
+joined$HH_per_acre <- (joined$HH/joined$ACRES)
+
+
+joined$HH_Diff <- joined$HH_per_acre - joined$dwell_units
+
+joined <- joined %>%
+  filter(!is.na(HH_Diff))
+
+
+flip <- joined %>%
+  st_drop_geometry() %>%
+  filter(!is.na(HH_Diff)) %>%
+  group_by(density) %>%
+  summarise(HH_Diff = sum(HH_Diff))
+  
+
+p <- ggplot(flip,aes(x = reorder(density, HH_Diff),y = HH_Diff)) + 
+    geom_bar(stat = "identity",position = "dodge") + ggtitle("Massive Room for Housing in High Density")
+p <- p + xlab('') + ylab("Units Occupied - Units Zoned") + theme_minimal()
+ggplotly(p)
+
+
   
 ```
 
@@ -519,48 +525,83 @@ Map new NIMBY score, which is just standardized HH_Growth from 0 - 1
 
 
 
-```{r eval=FALSE, include=FALSE}
-leaflet()%>%
-  addPolygons(data=temp)
-
-
-bins<-c(0,0.5,0.75,1)
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+#bins<-c(0,50,100,250,500,1000,2000,5000, 10000, 50000)
+bins<-c(0,1,4,9,36,75)
 
 library(RColorBrewer)
 
-pal <- colorBin(
-  palette='RdYlGn',
-  bins=bins,
-  domain=temp$NIMBY_Score
+pal <- colorNumeric(
+  palette='magma',
+  #bins=bins,
+  domain=joined$HH_per_acre
 )
+
+
+
+pal2 <- colorBin(
+  palette='RdYlGn',
+  bins=c(0,5,10,25,50,100,200,300,500,2000),
+  domain=joined$HH_per_acre,
+  pretty=FALSE
+)
+
+pal3 <- colorNumeric(
+  palette='RdYlGn',
+ # bins=c(0,5,10,50,100,200,300500,2000),
+  domain=joined$HH_Diff
+)
+
+
+vec_breaks <- c(     0,   1,   5,             50,     100,     2000)
+vec_rgb    <- c("#d40808", "#d46008", "#85075f", "#0d4cde", "#16bfc4",  "#32e605") 
+
+#Add a colour column, and put in the appropriate RGB value
+for (i in 1:length(joined$HH_per_acre)) {
+    joined$colour[i] <- vec_rgb[min(which(vec_breaks > joined$HH_per_acre[i]))]
+}
+
 
 zone_map <- leaflet() %>%
   addProviderTiles("CartoDB.Positron") %>%
   setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
-  addPolygons(data=temp,
-              weight=1,
-              color=~pal(dwell_units),
-              popup=paste("Zone Type: ", res_zones$zone_flag, "<br>",
-                          "Detailed Zone:", res_zones$ZONE_GEN, "<br>",
-                          "Zoned for ", res_zones$dwell_units, "Dwell Units maximum", "<br>",
-                          "Acres: ", res_zones$ACRES)) %>%
-  addLegend(
-    position="bottomright",
-    pal=pal,
-    values=res_zones$dwell_units,
-    title="Units/Acre"
-  )
+
+  addPolygons(data=joined,
+              weight=1, 
+              fillColor = joined$colour, stroke=TRUE,
+            #  color=~pal2(HH_per_acre),
+              popup=paste("Zone Type: ", joined$zone_flag, "<br>",
+                          "Detailed Zone:", joined$ZONE_GEN, "<br>",
+                          "Zoned for ", joined$dwell_units, "Dwell Units maximum", "<br>",
+                          "HHs Per Acre: ", joined$HH_per_acre)) 
 
 
 zone_map
-
 
 ```
 
 
 
+## to do -
+
+pick up where i left on 1.18.22 - the map is close, but may be useful to collapse the difference b/w the HHs and the HH's zoned by category 
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+zone_map <- leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  setView(-78.90390102117877,35.998220055791876,  zoom=14)%>%
+
+  addPolygons(data=joined,
+              weight=1, 
+              color=~pal3(HH_Diff),
+              popup=paste("Zone Type: ", joined$zone_flag, "<br>",
+                          "Detailed Zone:", joined$ZONE_GEN, "<br>",
+                          "Zoned for ", joined$dwell_units, "Dwell Units maximum", "<br>",
+                          "Diff Per Acre: ", joined$HH_Diff)) 
 
 
+zone_map
+```
 
 
 
