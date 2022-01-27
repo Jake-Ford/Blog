@@ -2,18 +2,17 @@
   "articles": [
     {
       "path": "about.html",
-      "title": "About this blog",
-      "description": "Some additional details about the blog",
+      "title": "About ",
       "author": [],
-      "contents": "\r\nMy name is Jake Ford, I live in Durham, North Carolina. I’ve worked in policy analysis and applied mathematics at the state and local government level.\r\nFeel free to get in touch at jake.ford927@gmail.com.\r\n\r\n\r\n\r\n",
-      "last_modified": "2021-12-07T08:33:52-05:00"
+      "contents": "\r\nAbout\r\nMy name is Jake Ford, I live in Durham, North Carolina. I’ve worked in policy analysis and applied mathematics at the state and local government level. In my day job I build and maintain predictive travel models for the City of Durham C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog\r\n\r\nI like to think and write about policy related questions in a data science framework. Sometimes it’s fun, sometime’s it’s serious, hopefully more often than not it’s both!\r\nHere’s charlie, our rescue greyhound. You’ll probably be seeing him a lot here.\r\n Email: jake.ford927@gmail.com.\r\n\r\n\r\n\r\n",
+      "last_modified": "2022-01-27T18:28:02-05:00"
     },
     {
       "path": "index.html",
-      "title": "My Blog",
+      "title": "Blog",
       "author": [],
       "contents": "\r\n\r\n\r\n\r\n",
-      "last_modified": "2021-12-06T20:06:07-05:00"
+      "last_modified": "2022-01-18T21:26:50-05:00"
     }
   ],
   "collections": ["posts/posts.json"]
