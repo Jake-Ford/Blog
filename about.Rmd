@@ -1,7 +1,5 @@
 ---
-title: "About "
-
-  
+title: 'About '
 ---
 
 ```{r setup, include=FALSE}
@@ -17,7 +15,7 @@ How is Durham changing demographically? Explore the 2020 census below:
 ## About
 
 
-My name is Jake Ford, I live in Durham, North Carolina. I've worked in policy analysis and applied mathematics at the state and local government level.
+My name is Jake Ford, I live in Durham, North Carolina. I've worked in policy analysis and applied mathematics at the state and local government level. In my day job I build and maintain predictive travel models for the City of Durham
 
 
 ![](IMG-3272.jpg) 
@@ -25,7 +23,8 @@ My name is Jake Ford, I live in Durham, North Carolina. I've worked in policy an
 
 I like to think and write about policy related questions in a data science framework. Sometimes it's fun, sometime's it's serious, hopefully more often than not it's both! 
 
-This website is built using Rmarkdown's distill tool. In my day job I build and maintain predictive travel models for the City of Durham. Geospatial analysis comes pretty naturally, so expect some maps, geospatial tools like overlays, centroids, and tagging of all sorts. 
+
+Here's charlie, our rescue greyhound. You'll probably be seeing him a lot here. 
 
 ![](IMG-3834.jpg) 
 
