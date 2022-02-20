@@ -1,7 +1,7 @@
 ---
-title: "NC Redistricint - Februray Update"
+title: "NC Redistricing - Februray Update"
 description: |
-  A short description of the post.
+  Here we go again. .
 author:
   - name: Jacob Ford
     url: https://jford-dchcmpo.github.io/Blog/posts/2021-12-30-Redistricting-and-Racial-Targetting/
@@ -11,4 +11,8 @@ output:
     self_contained: false
 ---
 
+
+```{r}
+
+```
 
