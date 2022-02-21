@@ -1,5 +1,5 @@
 ---
-title: "NC Redistricing - Februray Update"
+title: "NC Redistricing - February Update"
 description: |
   Here we go again. .
 author:
