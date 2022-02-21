@@ -143,6 +143,8 @@ centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal
 
 The state house and state senate maps are final, only the congressional maps are being altered. I didn't know that until I added the new maps (February in click option) to the below. If you don't believe me, just find out for yourself. 
 
+Recall, to train the models on the new congressional lines, I assumed the 2022 midterms would follow FiveThirtyEight's [Partisan Lean](https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/). This assumes the worst for Democrats in North Carolina, which I imagine is more likely than not. 
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 
@@ -249,8 +251,9 @@ map %>% hideGroup("Congress New")%>% hideGroup("Senate New")%>% hideGroup("House
 
 Told you so. 
 
+## Summary Stats
 
-We'll make the same summary stats to start. Notice how the February updated lines seem to be a large improvement in racial parity - Blacks were nearly twice as likely to be represented by a Democrat with the 2010-2019 congressional lines, in the February update it's almost even.
+We'll make the same summary stats to start. Notice how the February updated lines seem to be a large improvement in racial parity - Blacks were nearly twice as likely to be represented by a Democrat with the 2010-2019 congressional lines, in the February update it's almost even. This process requires tagging each of the nearly quarter million census blocks in North Carolina to the congressional district represented.
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -314,11 +317,11 @@ datatable(temp, caption = "Average Racial Breakdown by 2021 Congressional Repres
 
 temp <- centroids %>%
   st_drop_geometry() %>%
-  mutate(`PARTY_2022` = case_when(
+  mutate(`February_Party` = case_when(
     PARTY_2022 == 0 ~ "Republican",
     PARTY_2022 == 1 ~ "Democrat"
   )) %>%
-  group_by(`PARTY_2022`) %>%
+  group_by(`February_Party`) %>%
   summarize(Mean_white = mean(PCT_WHT, na.rm=T),
             Mean_black = mean(PCT_BLC, na.rm=T),
             Mean_hispanic = mean(PCT_HSP, na.rm=T),
@@ -391,7 +394,7 @@ summary(model_2021)
 ### February Model
 
 
-feb_model <- glm(PARTY_2022 ~PCT_HSP + PCT_WHT + PCT_BLC + PCT_ASN + Med_income_log ,family=binomial(link='logit'),data=train)
+feb_model <- glm(February_Party ~PCT_HSP + PCT_WHT + PCT_BLC + PCT_ASN + Med_income_log ,family=binomial(link='logit'),data=train)
 
 summary(feb_model)
 
@@ -417,7 +420,7 @@ ggplot(test, aes(x=PCT_ASN, y=PARTY_2021)) + geom_point() +
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Asian")
 
-ggplot(test, aes(x=PCT_ASN, y=PARTY_2022)) + geom_point() + 
+ggplot(test, aes(x=PCT_ASN, y=February_Party)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("February Update")
 
@@ -433,7 +436,7 @@ ggplot(test, aes(x=PCT_BLC, y=PARTY_2021)) + geom_point() +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Black")
 
 
-ggplot(test, aes(x=PCT_BLC, y=PARTY_2022)) + geom_point() + 
+ggplot(test, aes(x=PCT_BLC, y=February_Party)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("February Update")
 
@@ -448,7 +451,7 @@ ggplot(test, aes(x=PCT_WHT, y=PARTY_2021)) + geom_point() +
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts White")
 
-ggplot(test, aes(x=PCT_WHT, y=PARTY_2022)) + geom_point() + 
+ggplot(test, aes(x=PCT_WHT, y=February_Party)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("February Update")
 #=====================================================================#
@@ -461,7 +464,7 @@ ggplot(test, aes(x=PCT_HSP, y=PARTY_2021)) + geom_point() +
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Hispanic")
 
-ggplot(test, aes(x=PCT_HSP, y=PARTY_2022)) + geom_point() + 
+ggplot(test, aes(x=PCT_HSP, y=February_Party)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("February Update")
 
@@ -512,7 +515,7 @@ pred <- predict(feb_model, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$PARTY_2022
+y_act <- test$February_Party
 
 feb_pred <- mean(y_pred == y_act, na.rm=T) 
 #=====================================================================#
@@ -675,10 +678,10 @@ ggplot(data = df,
 
 
 model_data <- centroids %>% 
-  select(PARTY_2019,PARTY_2021,PARTY_2022, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
+  select(PARTY_2019,PARTY_2021,February_Party, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
 model_data$PARTY_2021 <- as.factor(model_data$PARTY_2021)
 model_data$PARTY_2019 <- as.factor(model_data$PARTY_2019)
-model_data$PARTY_2022 <- as.factor(model_data$PARTY_2022)
+model_data$February_Party <- as.factor(model_data$February_Party)
 
 samp <- sample(nrow(model_data), 0.8*nrow(model_data))
 
@@ -708,7 +711,7 @@ varImpPlot(RF_2021)
 
 
 RF_Feb<- randomForest(
-  formula = PARTY_2022 ~ PCT_BLC + PCT_HSP+PCT_WHT+PCT_ASN + Med_income_log,
+  formula = February_Party ~ PCT_BLC + PCT_HSP+PCT_WHT+PCT_ASN + Med_income_log,
   data=train,
   importance=TRUE
 )
@@ -769,12 +772,12 @@ pred_2021 <- sum(p==test$PARTY_2021) / nrow(test)
 p <- predict(RF_Feb, newdata=test)
 # table(p, test$PARTY_2021)
 
-results <- cbind(p, test$PARTY_2022)
+results <- cbind(p, test$February_Party)
 
 colnames(results) <- c('pred','real')
 results <- as.data.frame(results)
 
-pred_feb <- sum(p==test$PARTY_2022) / nrow(test)
+pred_feb <- sum(p==test$February_Party) / nrow(test)
 
 
 #=====================================================================#
