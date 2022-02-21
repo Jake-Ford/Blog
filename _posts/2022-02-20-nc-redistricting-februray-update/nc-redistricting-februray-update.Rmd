@@ -691,9 +691,10 @@ In the blow importance plots, focus on the mean decrease of accuracy. In 2019, B
 
 
 model_data <- centroids %>% 
-  select(PARTY_2019,PARTY_2021, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
+  select(PARTY_2019,PARTY_2021,PARTY_2022, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
 model_data$PARTY_2021 <- as.factor(model_data$PARTY_2021)
 model_data$PARTY_2019 <- as.factor(model_data$PARTY_2019)
+model_data$PARTY_2022 <- as.factor(model_data$PARTY_2022)
 
 samp <- sample(nrow(model_data), 0.8*nrow(model_data))
 
@@ -708,6 +709,7 @@ RF_2019 <- randomForest(
 
 # importance(RF_2019)
 varImpPlot(RF_2019)
+#=====================================================================#
 
 
 RF_2021<- randomForest(
@@ -718,6 +720,25 @@ RF_2021<- randomForest(
 
 # importance(RF_2021)
 varImpPlot(RF_2021)
+#=====================================================================#
+
+
+RF_Feb<- randomForest(
+  formula = PARTY_2022 ~ PCT_BLC + PCT_HSP+PCT_WHT+PCT_ASN + Med_income_log,
+  data=train,
+  importance=TRUE
+)
+
+# importance(RF_2021)
+varImpPlot(RF_Feb)
+
+
+
+
+
+
+
+
 
 ```
 
@@ -740,6 +761,7 @@ results <- as.data.frame(results)
 pred_2019 <- sum(p==test$PARTY_2019) / nrow(test)
 
 
+#=====================================================================#
 
 
 
@@ -754,12 +776,27 @@ results <- as.data.frame(results)
 pred_2021 <- sum(p==test$PARTY_2021) / nrow(test)
 
 
+#=====================================================================#
+
+
+p <- predict(RF_Feb, newdata=test)
+# table(p, test$PARTY_2021)
+
+results <- cbind(p, test$PARTY_2022)
+
+colnames(results) <- c('pred','real')
+results <- as.data.frame(results)
+
+pred_feb <- sum(p==test$PARTY_2022) / nrow(test)
+
+
+#=====================================================================#
 
 
 
-vals <- c(pred_2019, pred_2021)
+vals <- c(pred_2019, pred_2021,pred_feb)
 
-df <- data.frame(Year = c('2019', '2021'),vals)
+df <- data.frame(Year = c('2019', '2021', 'February'),vals)
 
 df$vals <- round(df$vals, 3)
 
@@ -774,9 +811,6 @@ ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + ge
 From the above, the results seen in the prior logit model are improved upon. 90.2% accuracy by 2021, just using income and demographics to correctly identify party representation. In each model, the new lines are clearly seen as an improvement on the ability to predict party representation. 
 
 ## Conclusion
-
-Going into this post, getting a bit out of hand, I didn't exactly expect to see definitive evidence of black and brown citizens being walled into a different political district. However, after seeing the results from both models, I'm a bit surprised at the results. The 2021 lines are being challenged in court now, using much more sophisticated methods of analyzing gerrymandering as I mentioned. But these simplified results show that at the very least, demographic and income sorting into political parties is becoming more clear. The chicken or the egg question here is not to be ignored, but my personal opinion is we shouldn't leave the possibility of voters being selected by politicans up to chance. Politicians should always be chosen by voters. North Carolina should follow Michigan's example, establish a commission to fairly redistrict. 
-
 
 
 
