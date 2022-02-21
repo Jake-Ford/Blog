@@ -250,7 +250,7 @@ map %>% hideGroup("Congress New")%>% hideGroup("Senate New")%>% hideGroup("House
 Told you so. 
 
 
-
+We'll make the same summary stats to start: 
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -572,7 +572,7 @@ This doesn't prove racial gerrymandering. It could reflect the 'Big Sort' occuri
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 ## Odds Ratios
 exp(coef(model_2019_blocks))
@@ -648,14 +648,37 @@ ggplot(data = df,
 
 
 
+##February
+
+
+df <- data.frame(lables=boxLabels, boxOdds = c(1.00953308    , 
+0.99998742    , 1.00236907 ,1.02191628     ), boxCILow = c(1.0088145    , 0.9996327    ,1.0018087 ,1.0203451    ), 
+                        boxCIHigh = c(1.01024899, 1.00034257, 1.00292776,1.02348719))
+
+p <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
+
+
+ggplot(data = df,
+       mapping = aes(y = forcats::fct_inorder(f = (x = boxLabels)))) +
+  geom_vline(xintercept = 1) +
+  geom_point(mapping = aes(x = boxOdds)) +
+  geom_errorbarh(mapping = aes(xmin = boxCILow,
+                               xmax = boxCIHigh)) +
+  coord_trans(x = scales::exp_trans()) +
+  # scale_x_continuous(breaks = log(x = 0.5 * (1:10)),
+  #                    minor_breaks = NULL,
+  #                    labels = (0.5 * (1:10))) +
+  labs(x = "Odds Ratio",
+       y = "") +theme_minimal() + ggtitle("February Model Odds Ratios, Race")
+
 
 # Median Income
 
 
-boxLabels = c("2019 District", "2021 Districts")
+boxLabels = c("2019 District", "2021 Districts", "February")
 
-df <- data.frame(lables=boxLabels, boxOdds = c(2.0259539656   , 5.310856286752776    ), boxCILow = c(1.9723423285   , 5.108356308166039   ), 
-                        boxCIHigh = c(2.081119204,5.521796860873518))
+df <- data.frame(lables=boxLabels, boxOdds = c(2.0259539656   , 5.310856286752776 , 1.18227618    ), boxCILow = c(1.9723423285   , 5.108356308166039 ,1.1563041   ), 
+                        boxCIHigh = c(2.081119204,5.521796860873518,1.20975856))
 
 p <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
 
@@ -742,7 +765,10 @@ varImpPlot(RF_Feb)
 
 ```
 
-Next we measure the predictive accuracy of each model, for the 2019 and 2021 lines. 
+
+
+
+Finally, lets see the predictive fit for all three. 
 
 
 
@@ -808,11 +834,14 @@ ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + ge
 ```
 
 
-From the above, the results seen in the prior logit model are improved upon. 90.2% accuracy by 2021, just using income and demographics to correctly identify party representation. In each model, the new lines are clearly seen as an improvement on the ability to predict party representation. 
+
 
 ## Conclusion
 
 
+
+
+With the metrics developed here, the February congressional districts seem to be more fair compared to the lines struck down by the NC Supreme Court. Relativity is important to recall, as the high degree of likelihood that political lines are drawn around demographic lines are clearly demonstrated. The February update is an improvement on the abomination of the lines originally approved by the NCGA, but that should not be mistaken for progress. 
 
 
 
