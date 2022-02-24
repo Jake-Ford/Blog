@@ -50,10 +50,9 @@ trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2
 
 
 nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp") 
-
 nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
-
 nc_congressional_2021_feb <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/February Update/SL 2022-3.shp")
+nc_congress_court <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/Final Court Ordered/Interim Congressional.shp")
 
 house_old<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_House_2019.shp")
 house_new<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_House_2021.shp")
@@ -72,6 +71,8 @@ nc_congressional_2021$DISTRICT <- as.integer(nc_congressional_2021$DISTRICT)
 nc_congressional_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
 nc_congressional_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
 nc_congressional_2021_feb <- st_transform(nc_congressional_2021_feb, st_crs(trm_taz_g2)) %>% st_make_valid()
+nc_congress_court <- st_transform(nc_congress_court, st_crs(trm_taz_g2)) %>% st_make_valid()
+
 
 house_old <- st_transform(house_old, st_crs(trm_taz_g2)) %>% st_make_valid()
 house_new <- st_transform(house_new, st_crs(trm_taz_g2)) %>% st_make_valid()
@@ -125,6 +126,31 @@ nc_congressional_2021_feb$Pred_Party <- case_when(
         nc_congressional_2021_feb$Partisan_Lean > 2 ~ 1
          
 )
+
+
+
+nc_congress_court <- nc_congress_court[order(nc_congress_court$DISTRICT),]
+
+nc_congress_court$Partisan_Lean <- c(-18,1,-20,-10,25,42,-20,-20,45,-26,-16,-16,-25,-12)
+
+##source for paritisan lean: https://projects.fivethirtyeight.com/redistricting-2022-maps/north-carolina/
+# nc_congress_court$color <- case_when(
+#        nc_congress_court$Partisan_Lean  < -19 ~ -3,
+#         nc_congress_court$Partisan_Lean < -10 ~ -2,
+#         nc_congress_court$Partisan_Lean < -5 ~ -1,
+#         nc_congress_court$Partisan_Lean < 5 ~ 0, 
+#         nc_congress_court$Partisan_Lean  < 10 ~ 1,
+#         nc_congress_court$Partisan_Lean > 10 ~ 2 
+#          
+# )
+
+nc_congress_court$Pred_Party <- case_when(
+       nc_congress_court$Partisan_Lean  < 2 ~ 0,
+        nc_congress_court$Partisan_Lean > 2 ~ 1
+         
+)
+
+
 
 
 
