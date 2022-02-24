@@ -778,10 +778,11 @@ ggplot(data = df,
 
 
 model_data <- centroids %>% 
-  select(PARTY_2019,PARTY_2021,PARTY_2022, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
+  select(PARTY_2019,PARTY_2021,PARTY_2022, COURT_PART, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
 model_data$PARTY_2021 <- as.factor(model_data$PARTY_2021)
 model_data$PARTY_2019 <- as.factor(model_data$PARTY_2019)
 model_data$PARTY_2022 <- as.factor(model_data$PARTY_2022)
+model_data$COURT_PART <- as.factor(model_data$COURT_PART)
 
 samp <- sample(nrow(model_data), 0.8*nrow(model_data))
 
