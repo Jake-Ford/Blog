@@ -12,10 +12,8 @@ output:
 ---
 
 
+Deja-vu! The North Carolina Supreme Court rejected the maps that I previously analyzed, instead opting to use [maps](https://www.ncleg.gov/Redistricting) drawn by outside experts. Wowza! Let's, hopefully one last time, see how these maps compare to the 2010-2019 maps, the initially suggested redistricting by the General Assembly, the February update post the initial legal challenge, and now the court ordered drafted lines. 
 
-Late last week, Republicans in the North Carolina General Assembly cobbled together the [political boundaries](https://thehill.com/homenews/state-watch/594908-north-carolina-legislature-approves-new-us-house-maps) that, if approved and adopted, will define the political delineations in one of the fastest growing states in the country for the next decade. In my inaugural [post](https://jford-dchcmpo.github.io/Blog/posts/2021-12-07-Redistricting-and-Racial-Targetting/), I trained a few ML algorithms to determine if the recently thrown out political lines would perform better at sorting demographic groups into either Democratic or Republican districts. I'm not breaking any barrier of knowledge in saying minorities vote more often for Democrats, though in 2020 we saw how the hispanic vote (itself a constellation of dozens of nationalities and political priorities, impossible to untangle) once though a sure win for Democrats shifted to Republicans in key races. However, one of the arguments against political gerrymandering is that with the aid of immense voter level data, including demograhpics and previous vote history, that political lines are sorting us too well. That politicians are picking the voters, not the other way around. 
-
-With that being said, let's add in the new lines. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
@@ -715,9 +713,9 @@ ggplot(data = df,
 ##Court Ordered
 
 
-df <- data.frame(lables=boxLabels, boxOdds = c(1.00953308    , 
-0.99998742    , 1.00236907 ,1.02191628     ), boxCILow = c(1.0088145    , 0.9996327    ,1.0018087 ,1.0203451    ), 
-                        boxCIHigh = c(1.01024899, 1.00034257, 1.00292776,1.02348719))
+df <- data.frame(lables=boxLabels, boxOdds = c(1.0102481962     , 
+0.9986372917     , 1.0057546861  ,1.0135513824      ), boxCILow = c(1.0094911593     , 0.9982595907     ,1.0051712000  ,1.0118822905     ), 
+                        boxCIHigh = c(1.011002040, 0.999015431, 1.006336640,1.015208764))
 
 p <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
 
@@ -733,7 +731,7 @@ ggplot(data = df,
   #                    minor_breaks = NULL,
   #                    labels = (0.5 * (1:10))) +
   labs(x = "Odds Ratio",
-       y = "") +theme_minimal() + ggtitle("February Model Odds Ratios, Race")
+       y = "") +theme_minimal() + ggtitle("Court Ordered Model Odds Ratios, Race")
 
 
 
@@ -746,10 +744,10 @@ ggplot(data = df,
 # Median Income
 
 
-boxLabels = c("2019 District", "2021 Districts", "February")
+boxLabels = c("2019 District", "2021 Districts", "February", "Court Ordered")
 
-df <- data.frame(lables=boxLabels, boxOdds = c(2.0259539656   , 5.310856286752776 , 1.18227618    ), boxCILow = c(1.9723423285   , 5.108356308166039 ,1.1563041   ), 
-                        boxCIHigh = c(2.081119204,5.521796860873518,1.20975856))
+df <- data.frame(lables=boxLabels, boxOdds = c(2.0259539656   , 5.310856286752776 , 1.18227618 ,1.6628874988    ), boxCILow = c(1.9723423285   , 5.108356308166039 ,1.1563041,1.6096197402    ), 
+                        boxCIHigh = c(2.081119204,5.521796860873518,1.20975856,1.718109910))
 
 p <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
 
@@ -822,6 +820,20 @@ RF_Feb<- randomForest(
 varImpPlot(RF_Feb)
 
 
+#=====================================================================#
+
+
+court_Feb<- randomForest(
+  formula = COURT_PART ~ PCT_BLC + PCT_HSP+PCT_WHT+PCT_ASN + Med_income_log,
+  data=train,
+  importance=TRUE
+)
+
+# importance(RF_2021)
+varImpPlot(court_Feb)
+
+
+
 
 
 
@@ -834,7 +846,7 @@ varImpPlot(RF_Feb)
 
 
 
-Finally, lets see the predictive fit for all three. 
+Finally, lets see the predictive fit for all four: 
 
 
 
@@ -883,12 +895,24 @@ pred_feb <- sum(p==test$PARTY_2022) / nrow(test)
 
 
 #=====================================================================#
+p <- predict(court_Feb, newdata=test)
+# table(p, test$PARTY_2021)
+
+results <- cbind(p, test$COURT_PART)
+
+colnames(results) <- c('pred','real')
+results <- as.data.frame(results)
+
+pred_court <- sum(p==test$COURT_PART) / nrow(test)
+
+
+#=====================================================================#
 
 
 
-vals <- c(pred_2019, pred_2021,pred_feb)
+vals <- c(pred_2019, pred_2021,pred_feb,pred_court)
 
-df <- data.frame(Year = c('2019', '2021', 'February'),vals)
+df <- data.frame(Year = c('2019', '2021', 'February', 'Court Ordered'),vals)
 
 df$vals <- round(df$vals, 3)
 
@@ -906,8 +930,6 @@ ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + ge
 
 
 
-
-With the metrics developed here, the February congressional districts seem to be more fair compared to the lines struck down by the NC Supreme Court. Relativity is important to recall, as the high degree of likelihood that political lines are drawn around demographic lines are clearly demonstrated. The February update is an improvement on the abomination of the lines originally approved by the NCGA, but that should not be mistaken for progress. 
 
 
 
