@@ -16,10 +16,12 @@ Deja-vu! The North Carolina Supreme Court rejected the maps that I previously an
 
 
 ```{r setup, include=FALSE}
+##load packages and district lines
+
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
-library(caliperR)
+#library(caliperR)
 library(nngeo)
-library(tcadr)
+#library(tcadr)
 library(sf)
 library(leaflet)
 library(PL94171)
@@ -36,30 +38,27 @@ library(randomForest)
 
 # remotes::install_github("walkerke/tidycensus")
 # remotes::install_github("walkerke/tigris")
-library(tidycensus)
-library(tidyverse)
+
 library(tigris)
 
 vars_2020 <- load_variables(2020,"pl",cache=TRUE)
 vars_2010 <- load_variables(2010,"sf1", cache=TRUE)
 vars_2019 <- load_variables(2019,"acs5", cache=TRUE)
 
-trm_taz_g2 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/Archive/TRM_G2_TAZ_CaliperUpdated.shp")
+trm_taz_g2 <- st_read("/Users/jacobford/Library/Mobile Documents/com~apple~CloudDocs/R/Files/TRM_G2_TAZ_CaliperUpdated.shp")
 
+nc_congressional_2019 <- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp") 
+nc_congressional_2021 <- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//2021 NC Congressional/SL 2021-174 Congress.shp")
+nc_congressional_2021_feb <- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//February Update/SL 2022-3.shp")
+nc_congress_court <- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//Final Court Ordered/Interim Congressional.shp")
 
+house_old<- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//NC_House_2019.shp")
+house_new<- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//NC_House_2021.shp")
+house_feb <- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//February Update/SL 2022-4.shp")
 
-nc_congressional_2019 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2019 NC Congressional/NC_Congress_2019.shp") 
-nc_congressional_2021 <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/2021 NC Congressional/SL 2021-174 Congress.shp")
-nc_congressional_2021_feb <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/February Update/SL 2022-3.shp")
-nc_congress_court <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/Final Court Ordered/Interim Congressional.shp")
-
-house_old<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_House_2019.shp")
-house_new<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_House_2021.shp")
-house_feb <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/February Update/SL 2022-4.shp")
-
-senate_old<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_Senate_2019.shp")
-senate_new<- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/NC_Senate_2021.shp")
-senate_feb <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Voting Districts/February Update/SL 2022-2.shp")
+senate_old<- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//NC_Senate_2019.shp")
+senate_new<- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//NC_Senate_2021.shp")
+senate_feb <- st_read("/Users/jacobford/Documents/GitHub/Blog/Voting Districts//February Update/SL 2022-2.shp")
 
 nc_congressional_2021$DISTRICT <- as.integer(nc_congressional_2021$DISTRICT)
 
@@ -152,14 +151,125 @@ nc_congress_court$Pred_Party <- case_when(
 
 
 
-
-
 ## You can use st_join and tag each census block centroid with the party ID from congressional layer,
 ## but it is more efficient to tag in a separate GIS software, then read back in already tagged. Work smarter not harder. 
 
-centroids <- st_read("C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/centroids.shp") %>%
-  mutate(PARTY_2019 = P_2019) %>%
-  filter(!(is.na(PARTY_2019)))
+
+
+```
+
+Need to re-run this with the get_ACS
+
+all blocks in 2020 census with:
+
+Demographic: white, black, asian, hispanic
+median income
+Households
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+census_api_key('ba3d95cae3658f3145daf7f66119ed58a52aaca3')
+
+
+#white = P1_003N
+#black = P1_004N
+#hispanic =P2_002N
+#asian = P1_006N
+#median income = "B19301_001
+
+## load data
+blocks_2020_White <- get_decennial(
+ geography="block",
+ variables= "P1_003N", 
+ summary_var = "P1_001N",
+ state="NC",
+ year=2020,
+ geometry=TRUE,
+)%>%
+  mutate(White=value,
+         PctWhite = 100*(value/summary_value)) 
+
+
+blocks_2020_Black <- get_decennial(
+ geography="block",
+ variables= "P1_004N",
+ summary_var = "P1_001N",
+ state="NC",
+ year=2020,
+ geometry=TRUE
+)%>%
+  mutate(Black=value,
+         PctBlack = 100*(value/summary_value)) 
+
+blocks_2020_Asian <- get_decennial(
+ geography="block",
+ variables= "P1_006N",
+ summary_var = "P1_001N",
+ state="NC",
+ year=2020,
+ geometry=TRUE
+)%>%
+  mutate(Asian=value,
+         PctAsian = 100*(value/summary_value)) 
+
+
+blocks_2020_Hispanic <- get_decennial(
+ geography="block",
+ variables= "P2_002N",
+ summary_var = "P2_001N",
+ state="NC",
+ year=2020,
+ geometry=TRUE
+)%>%
+  mutate(Hispanic=value,
+         PctHispanic = 100*(value/summary_value)) 
+
+
+NC_Income <- get_acs(
+ geography="county",
+ variables= "B19301_001", #Median Income per Capita in 2019 Inflation Adjusted Dollars
+ state="NC",
+ year=2019,
+ geometry=TRUE,
+)  
+
+
+# 
+# final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg,NC_Asian_2020_bg ) %>%
+#  select(GeoID, Name, pct_black, pct_hispanic, pct_white, pct_asian, HH_Vacant, geometry) %>%
+#  mutate(pct_other = 100 - (pct_black + pct_white + pct_asian))
+# 
+
+blocks_2020 <- cbind(blocks_2020_White,blocks_2020_Black,blocks_2020_Asian,blocks_2020_Hispanic) %>%
+  select(GEOID, NAME, PctWhite, PctBlack, PctAsian, PctHispanic) 
+
+temp <- st_transform(blocks_2020, st_crs(congress_2019)) %>% st_make_valid()
+
+
+centroids <- blocks_2020 %>%
+  st_point_on_surface() %>%
+  st_join(NC_Income %>%select(estimate)) %>%
+  mutate(Med_Income = estimate)
+
+##next step includes tagging each of the four political representation 
+
+#first, tag existing 2019 representation
+
+centroids <- st_transform(centroids, st_crs(trm_taz_g2)) %>% st_make_valid()
+nc_congressional_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
+nc_congressional_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
+nc_congressional_2021_feb <- st_transform(nc_congressional_2021_feb, st_crs(trm_taz_g2)) %>% st_make_valid()
+nc_congress_court <- st_transform(nc_congress_court, st_crs(trm_taz_g2)) %>% st_make_valid()
+
+
+
+
+centroids <- centroids %>%
+  st_join(nc_congressional_2019 %>% select(Party_2019 = sParty)) %>%
+  st_join(nc_congressional_2021 %>% select(Party_2021 = Pred_Party)) %>%
+  st_join(nc_congressional_2021_feb %>% select(Party_2021_Feb = Pred_Party)) %>%
+  st_join(nc_congress_court %>% select(Party_2021_courts = Pred_Party))
 
 ```
 
@@ -175,7 +285,7 @@ Recall, to train the models on the new congressional lines, I assumed the 2022 m
 
 
 
-congress_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
+ congress_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
 
 pal <- colorFactor(
   palette=c('blue','red'),
@@ -259,25 +369,28 @@ We'll make the same summary stats to start. Notice how the February updated line
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
-
+centroids <- centroids %>%
+  filter(!is.na(Party_2019))
 
 centroids$Med_income_log <- case_when(
-  centroids$MD_INCM == 0 ~ 0,
-  centroids$MD_INCM > 0 ~ log(centroids$MD_INCM))
+  centroids$Med_Income == 0 ~ 0,
+  centroids$Med_Income > 0 ~ log(centroids$Med_Income))
 
 ## 2019 
 temp <- centroids %>%
   st_drop_geometry() %>%
-  mutate(`PARTY 2019` = case_when(
-    PARTY_2019 == 0 ~ "Republican",
-    PARTY_2019 == 1 ~ "Democrat"
+  mutate(`PARTY 2019` =Party_2019) %>%
+  mutate('Party_2019_tag' = case_when(
+    Party_2019=="Democrat" ~ 1,
+    TRUE ~ 0
+    
   )) %>%
   group_by(`PARTY 2019`) %>%
-  summarize(Mean_white = mean(PCT_WHT, na.rm=T),
-            Mean_black = mean(PCT_BLC, na.rm=T),
-            Mean_hispanic = mean(PCT_HSP, na.rm=T),
-            Mean_asian = mean(PCT_ASN, na.rm=T),
-            Mean_inc = mean(MD_INCM, na.rm=T))
+  summarize(Mean_white = mean(PctWhite, na.rm=T),
+            Mean_black = mean(PctBlack, na.rm=T),
+            Mean_hispanic = mean(PctHispanic, na.rm=T),
+            Mean_asian = mean(PctAsian, na.rm=T),
+            Mean_inc = mean(Med_Income, na.rm=T))
 
 library(DT)
 
@@ -293,15 +406,15 @@ datatable(temp, caption = "Average Racial Breakdown by 2019 Congressional Repres
 temp <- centroids %>%
   st_drop_geometry() %>%
   mutate(`PARTY 2021` = case_when(
-    PARTY_2021 == 0 ~ "Republican",
-    PARTY_2021 == 1 ~ "Democrat"
+    Party_2021 == 0 ~ "Republican",
+    Party_2021 == 1 ~ "Democrat"
   )) %>%
   group_by(`PARTY 2021`) %>%
-  summarize(Mean_white = mean(PCT_WHT, na.rm=T),
-            Mean_black = mean(PCT_BLC, na.rm=T),
-            Mean_hispanic = mean(PCT_HSP, na.rm=T),
-            Mean_asian = mean(PCT_ASN, na.rm=T),
-            Mean_inc = mean(MD_INCM, na.rm=T))
+  summarize(Mean_white = mean(PctWhite, na.rm=T),
+            Mean_black = mean(PctBlack, na.rm=T),
+            Mean_hispanic = mean(PctHispanic, na.rm=T),
+            Mean_asian = mean(PctAsian, na.rm=T),
+            Mean_inc = mean(Med_Income, na.rm=T))
 
 library(DT)
 
@@ -319,16 +432,15 @@ datatable(temp, caption = "Average Racial Breakdown by 2021 Congressional Repres
 temp <- centroids %>%
   st_drop_geometry() %>%
   mutate(`February_Party` = case_when(
-    PARTY_2022 == 0 ~ "Republican",
-    PARTY_2022 == 1 ~ "Democrat"
+    Party_2021_Feb == 0 ~ "Republican",
+    Party_2021_Feb == 1 ~ "Democrat"
   )) %>%
   group_by(`February_Party`) %>%
-  summarize(Mean_white = mean(PCT_WHT, na.rm=T),
-            Mean_black = mean(PCT_BLC, na.rm=T),
-            Mean_hispanic = mean(PCT_HSP, na.rm=T),
-            Mean_asian = mean(PCT_ASN, na.rm=T),
-            Mean_inc = mean(MD_INCM, na.rm=T))
-
+  summarize(Mean_white = mean(PctWhite, na.rm=T),
+            Mean_black = mean(PctBlack, na.rm=T),
+            Mean_hispanic = mean(PctHispanic, na.rm=T),
+            Mean_asian = mean(PctAsian, na.rm=T),
+            Mean_inc = mean(Med_Income, na.rm=T))
 library(DT)
 
 datatable(temp, caption = "February Update") %>%
@@ -339,21 +451,20 @@ datatable(temp, caption = "February Update") %>%
   formatRound('Mean_inc',2)
 
 
-
 ## court Ordered
 
 temp <- centroids %>%
   st_drop_geometry() %>%
   mutate(`Court Predicted Part` = case_when(
-    COURT_PART == 0 ~ "Republican",
-    COURT_PART == 1 ~ "Democrat"
+    Party_2021_courts == 0 ~ "Republican",
+    Party_2021_courts == 1 ~ "Democrat"
   )) %>%
   group_by(`Court Predicted Part`) %>%
-  summarize(Mean_white = mean(PCT_WHT, na.rm=T),
-            Mean_black = mean(PCT_BLC, na.rm=T),
-            Mean_hispanic = mean(PCT_HSP, na.rm=T),
-            Mean_asian = mean(PCT_ASN, na.rm=T),
-            Mean_inc = mean(MD_INCM, na.rm=T))
+  summarize(Mean_white = mean(PctWhite, na.rm=T),
+            Mean_black = mean(PctBlack, na.rm=T),
+            Mean_hispanic = mean(PctHispanic, na.rm=T),
+            Mean_asian = mean(PctAsian, na.rm=T),
+            Mean_inc = mean(Med_Income, na.rm=T))
 
 library(DT)
 
@@ -380,7 +491,9 @@ datatable(temp, caption = "Court Ordered Maps") %>%
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 
 ##Train and Test Data Sets
+#replace na's w/ zeros
 
+centroids[is.na(centroids)]=0
 centroids <- centroids %>% st_drop_geometry()
 train <- centroids[1:177478,]
 test <- centroids[177479:236638,]
@@ -394,7 +507,7 @@ test <- centroids[177479:236638,]
 
 ### 2019 Model Outputs
 
-model_2019_blocks <- glm(PARTY_2019 ~PCT_HSP + PCT_WHT + PCT_BLC + PCT_ASN + Med_income_log ,family=binomial(link='logit'),data=train)
+model_2019_blocks <- glm(Party_2019 ~PctHispanic + PctWhite + PctBlack + PctAsian + Med_income_log ,family=binomial(link='logit'),data=train)
 
 summary(model_2019_blocks)
 
