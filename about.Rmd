@@ -15,7 +15,7 @@ How is Durham changing demographically? Explore the 2020 census below:
 ## About
 
 
-My name is Jake Ford, I live in Durham, North Carolina. I've worked in policy analysis and applied mathematics at the state and local government level. In my day job I build and maintain predictive transportation models for the City of Durham. 
+My name is Jake Ford, I live in Durham, North Carolina. I'm a Data Scientist for [Solstice](https://solstice.us/), working to democratize access to solar energy. Previously, I've worked in policy analysis and applied mathematics at the state and local government level. 
 
 
 ![](C:/Users/JacobFo/OneDrive - City of Durham/GitHub/Personal Blog/Personal Blog/Arizona.png) 
