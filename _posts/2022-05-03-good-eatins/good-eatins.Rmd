@@ -4,6 +4,7 @@ description: |
   The hidden gems I didn't want to share
 author:
   - name: Jacob Ford
+    url: https://jford-dchcmpo.github.io/Blog/posts/2021-12-30-Redistricting-and-Racial-Targetting/
 date: 2022-05-03
 output:
   distill::distill_article:
@@ -12,11 +13,31 @@ output:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(leaflet)
+library(sf)
+
+library(readxl)
+eats_data <- read_excel("/Users/jacobford/Documents/GitHub/Blog/Where to Eat in Triangle.xlsx")
+
+
 ```
 
-Distill is a publication format for scientific and technical writing, native to the web.
 
-Learn more about using Distill at <https://rstudio.github.io/distill>.
 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+eats_map <- leaflet(data=eats_data) %>%
+  addTiles() %>%
+ # addProviderTiles("CartoDB.Positron") %>%
+  addCircles(lat = eats_data$Latitutde, lng=eats_data$Longitude,
+             popup=paste("Name: ", eats_data$Name, "<br>",
+                          "Genre: ", eats_data$Genre, "<br>",
+                          "Don't you dare miss: ", eats_data$`Don't Miss:`),
+             weight=10,
+             fillOpacity = 0.5)
+  
+  
+eats_map
+```
 
