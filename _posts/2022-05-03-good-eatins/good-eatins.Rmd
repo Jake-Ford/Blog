@@ -1,10 +1,9 @@
 ---
 title: "Good Eatin's"
 description: |
-  A short description of the post.
+  The hidden gems I didn't want to share
 author:
   - name: Jacob Ford
-    url: https://jford-dchcmpo.github.io/Blog/posts/2021-12-30-Redistricting-and-Racial-Targetting/
 date: 2022-05-03
 output:
   distill::distill_article:
