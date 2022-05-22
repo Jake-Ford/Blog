@@ -18,9 +18,9 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
-library(caliperR)
+
 library(nngeo)
-library(tcadr)
+
 library(sf)
 library(leaflet)
 library(PL94171)

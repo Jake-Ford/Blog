@@ -186,9 +186,11 @@ blocks_2020_White <- get_decennial(
  state="NC",
  year=2020,
  geometry=TRUE,
-)%>%
-  mutate(White=value,
-         PctWhite = 100*(value/summary_value)) 
+)
+
+
+blocks_2020_White$PctWhite <- blocks_2020_White$value/blocks_2020_White$summary_value
+
 
 
 blocks_2020_Black <- get_decennial(
@@ -196,11 +198,13 @@ blocks_2020_Black <- get_decennial(
  variables= "P1_004N",
  summary_var = "P1_001N",
  state="NC",
+ #county="Durham",
  year=2020,
  geometry=TRUE
-)%>%
-  mutate(Black=value,
-         PctBlack = 100*(value/summary_value)) 
+)
+
+blocks_2020_Black$PctBlack <- blocks_2020_Black$value/blocks_2020_Black$summary_value
+
 
 blocks_2020_Asian <- get_decennial(
  geography="block",
@@ -209,10 +213,9 @@ blocks_2020_Asian <- get_decennial(
  state="NC",
  year=2020,
  geometry=TRUE
-)%>%
-  mutate(Asian=value,
-         PctAsian = 100*(value/summary_value)) 
+)
 
+blocks_2020_Asian$PctAsian <- blocks_2020_Asian$value/blocks_2020_Asian$summary_value
 
 blocks_2020_Hispanic <- get_decennial(
  geography="block",
@@ -221,9 +224,9 @@ blocks_2020_Hispanic <- get_decennial(
  state="NC",
  year=2020,
  geometry=TRUE
-)%>%
-  mutate(Hispanic=value,
-         PctHispanic = 100*(value/summary_value)) 
+)
+
+blocks_2020_Hispanic$PctHispanic <- blocks_2020_Hispanic$value/blocks_2020_Hispanic$summary_value
 
 
 NC_Income <- get_acs(
@@ -244,7 +247,7 @@ NC_Income <- get_acs(
 blocks_2020 <- cbind(blocks_2020_White,blocks_2020_Black,blocks_2020_Asian,blocks_2020_Hispanic) %>%
   select(GEOID, NAME, PctWhite, PctBlack, PctAsian, PctHispanic) 
 
-temp <- st_transform(blocks_2020, st_crs(congress_2019)) %>% st_make_valid()
+temp <- st_transform(blocks_2020, st_crs(nc_congressional_2019)) %>% st_make_valid()
 
 
 centroids <- blocks_2020 %>%
@@ -262,6 +265,11 @@ nc_congressional_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2))
 nc_congressional_2021_feb <- st_transform(nc_congressional_2021_feb, st_crs(trm_taz_g2)) %>% st_make_valid()
 nc_congress_court <- st_transform(nc_congress_court, st_crs(trm_taz_g2)) %>% st_make_valid()
 
+nc_congressional_2019 <- nc_congressional_2019 %>%
+  mutate( Party_2019 = case_when(
+    sParty == "Democrat" ~ 1,
+    sParty == "Republican" ~ 0
+  ))
 
 
 
@@ -493,6 +501,12 @@ datatable(temp, caption = "Court Ordered Maps") %>%
 ##Train and Test Data Sets
 #replace na's w/ zeros
 
+centroids <- centroids %>%
+  mutate( Party_2019_dummy = case_when(
+    Party_2019 == "Democrat" ~ 1,
+    Party_2019 == "Republican" ~ 0
+  ))
+
 centroids[is.na(centroids)]=0
 centroids <- centroids %>% st_drop_geometry()
 train <- centroids[1:177478,]
@@ -507,7 +521,9 @@ test <- centroids[177479:236638,]
 
 ### 2019 Model Outputs
 
-model_2019_blocks <- glm(Party_2019 ~PctHispanic + PctWhite + PctBlack + PctAsian + Med_income_log ,family=binomial(link='logit'),data=train)
+
+
+model_2019_blocks <- glm(Party_2019_dummy ~PctHispanic + PctWhite + PctBlack + PctAsian + Med_income_log ,family=binomial(link='logit'),data=train)
 
 summary(model_2019_blocks)
 
@@ -522,7 +538,7 @@ summary(model_2019_blocks)
 ### 2021 Model Outputs
 
 
-model_2021 <- glm(PARTY_2021 ~PCT_HSP + PCT_WHT + PCT_BLC + PCT_ASN + Med_income_log ,family=binomial(link='logit'),data=train)
+model_2021 <- glm(Party_2021 ~PctHispanic + PctWhite + PctBlack + PctAsian + Med_income_log ,family=binomial(link='logit'),data=train)
 
 summary(model_2021)
 
@@ -534,7 +550,7 @@ summary(model_2021)
 ### February Model
 
 
-feb_model <- glm(PARTY_2022 ~PCT_HSP + PCT_WHT + PCT_BLC + PCT_ASN + Med_income_log ,family=binomial(link='logit'),data=train)
+feb_model <- glm(Party_2021_Feb ~PctHispanic + PctWhite + PctBlack + PctAsian + Med_income_log ,family=binomial(link='logit'),data=train)
 
 summary(feb_model)
 
@@ -547,7 +563,8 @@ summary(feb_model)
 ### Court Ordered Model
 
 
-court_model <- glm(COURT_PART ~PCT_HSP + PCT_WHT + PCT_BLC + PCT_ASN + Med_income_log ,family=binomial(link='logit'),data=train)
+court_model <- glm(Party_2021_courts ~PctHispanic + PctWhite + PctBlack + PctAsian + Med_income_log ,family=binomial(link='logit'),data=train)
+
 
 summary(court_model)
 
@@ -564,75 +581,75 @@ Lets see if the new lines hold up with the logistic model, determining how likel
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
-ggplot(test, aes(x=PCT_ASN, y=PARTY_2019)) + geom_point(fill='red') + 
+ggplot(test, aes(x=PctAsian, y=Party_2019_dummy)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Asian")
 
-ggplot(test, aes(x=PCT_ASN, y=PARTY_2021)) + geom_point() + 
+ggplot(test, aes(x=PctAsian, y=Party_2021)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Asian")
 
-ggplot(test, aes(x=PCT_ASN, y=PARTY_2022)) + geom_point() + 
+ggplot(test, aes(x=PctAsian, y=Party_2021_Feb)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("February Update")
 
-ggplot(test, aes(x=PCT_ASN, y=COURT_PART)) + geom_point() + 
+ggplot(test, aes(x=PctAsian, y=Party_2021_courts)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Asian") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("Court Ordered Update")
 
 #=====================================================================#
 
 
-ggplot(test, aes(x=PCT_BLC, y=PARTY_2019)) + geom_point() + 
+ggplot(test, aes(x=PctBlack, y=Party_2019_dummy)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Black")
 
-ggplot(test, aes(x=PCT_BLC, y=PARTY_2021)) + geom_point() + 
+ggplot(test, aes(x=PctBlack, y=Party_2021)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Black")
 
 
-ggplot(test, aes(x=PCT_BLC, y=PARTY_2022)) + geom_point() + 
+ggplot(test, aes(x=PctBlack, y=Party_2021_Feb)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("February Update")
 
-ggplot(test, aes(x=PCT_BLC, y=COURT_PART)) + geom_point() + 
+ggplot(test, aes(x=PctBlack, y=Party_2021_courts)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Black") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("Court Ordered Update")
 
 #=====================================================================#
 
-ggplot(test, aes(x=PCT_WHT, y=PARTY_2019)) + geom_point(fill='red') + 
+ggplot(test, aes(x=PctWhite, y=Party_2019_dummy)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts White")
 
 
-ggplot(test, aes(x=PCT_WHT, y=PARTY_2021)) + geom_point() + 
+ggplot(test, aes(x=PctWhite, y=Party_2021)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts White")
 
-ggplot(test, aes(x=PCT_WHT, y=PARTY_2022)) + geom_point() + 
+ggplot(test, aes(x=PctWhite, y=Party_2021_Feb)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("February Update")
 
-ggplot(test, aes(x=PCT_WHT, y=COURT_PART)) + geom_point() + 
+ggplot(test, aes(x=PctWhite, y=Party_2021_courts)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("Court Ordered Update")
 #=====================================================================#
 
-ggplot(test, aes(x=PCT_HSP, y=PARTY_2019)) + geom_point(fill='red') + 
+ggplot(test, aes(x=PctHispanic, y=Party_2019_dummy)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts Hispanic")
 
-ggplot(test, aes(x=PCT_HSP, y=PARTY_2021)) + geom_point() + 
+ggplot(test, aes(x=PctHispanic, y=Party_2021)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("2021 Districts Hispanic")
 
-ggplot(test, aes(x=PCT_HSP, y=PARTY_2022)) + geom_point() + 
+ggplot(test, aes(x=PctHispanic, y=Party_2021_Feb)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("February Update")
 
-ggplot(test, aes(x=PCT_HSP, y=COURT_PART)) + geom_point() + 
+ggplot(test, aes(x=PctHispanic, y=Party_2021_courts)) + geom_point() + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent Hispanic") +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("Court Ordered Update")
 
