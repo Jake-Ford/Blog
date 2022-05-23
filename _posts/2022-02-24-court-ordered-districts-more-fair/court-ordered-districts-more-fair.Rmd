@@ -677,7 +677,7 @@ pred <- predict(model_2019_blocks, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$PARTY_2019
+y_act <- test$Party_2019_dummy
 
 pred_2019 <- mean(y_pred == y_act, na.rm=T) 
 
@@ -687,7 +687,7 @@ pred <- predict(model_2021, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$PARTY_2021
+y_act <- test$Party_2021
 
 pred_2021 <- mean(y_pred == y_act, na.rm=T) 
 
@@ -700,7 +700,7 @@ pred <- predict(feb_model, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$PARTY_2022
+y_act <- test$Party_2021
 
 feb_pred <- mean(y_pred == y_act, na.rm=T) 
 #=====================================================================#
@@ -712,7 +712,7 @@ pred <- predict(court_model, newdata = test, type = "response")
 
 y_pred_num <- ifelse(pred > 0.5, 1, 0)
 y_pred <- factor(y_pred_num, levels=c(0, 1))
-y_act <- test$COURT_PART
+y_act <- test$Party_2021_courts
 
 court_pred <- mean(y_pred == y_act, na.rm=T) 
 #=====================================================================#
@@ -749,10 +749,10 @@ exp(coef(model_2021))
 exp(coef(feb_model))
 exp(coef(court_model))
 
-exp(cbind(OR = coef(model_2019_blocks), confint(model_2019_blocks)))
+#exp(cbind(OR = coef(model_2019_blocks), confint(model_2019_blocks)))
 exp(cbind(OR = coef(model_2021), confint(model_2021)))
 exp(cbind(OR = coef(feb_model), confint(feb_model)))
-exp(cbind(OR = coef(court_model), confint(court_model)))
+#exp(cbind(OR = coef(court_model), confint(court_model)))
 
 
 ```
