@@ -2,11 +2,6 @@
 title: 'About '
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-
-
-```
 ---
 How is Durham changing demographically? Explore the 2020 census below:
 ---

@@ -4,15 +4,15 @@
       "path": "about.html",
       "title": "About ",
       "author": [],
-      "contents": "\r\nAbout\r\nMy name is Jake Ford, I live in Durham, North Carolina. I’ve worked in policy analysis and applied mathematics at the state and local government level. In my day job I build and maintain predictive transportation models for the City of Durham.\r\n\r\nI like to think and write about policy related questions in a data science framework. Sometimes it’s fun, sometime’s it’s serious, hopefully more often than not it’s both!\r\nHere’s charlie, our rescue greyhound. You’ll probably be seeing him a lot here. Look at that snoot.\r\n\r\nFeel free to get in touch.\r\nEmail: jake.ford927@gmail.com.\r\n\r\n\r\n\r\n",
-      "last_modified": "2022-01-28T14:42:30-05:00"
+      "contents": "\nAbout\nMy name is Jake Ford, I live in Durham, North Carolina. I’m a Data\nScientist for Solstice, working to\ndemocratize access to solar energy. Previously, I’ve worked in policy\nanalysis and applied mathematics at the state and local government\nlevel.\n\nI like to think and write about policy related questions in a data\nscience framework. Sometimes it’s fun, sometime’s it’s serious,\nhopefully more often than not it’s both!\nHere’s charlie, our rescue greyhound. You’ll probably be seeing him a\nlot here. Look at that snoot.\n\nFeel free to get in touch.\nEmail: jake.ford927@gmail.com.\n\n\n\n",
+      "last_modified": "2022-05-25T10:03:30-04:00"
     },
     {
       "path": "index.html",
       "title": "Posts",
       "author": [],
-      "contents": "\r\n\r\n\r\n\r\n",
-      "last_modified": "2022-01-28T15:18:37-05:00"
+      "contents": "\n\n\n\n",
+      "last_modified": "2022-05-25T10:03:31-04:00"
     }
   ],
   "collections": ["posts/posts.json"]
