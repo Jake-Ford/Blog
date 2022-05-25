@@ -37,3 +37,28 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+centroids.dbf
+centroids.prj
+centroids.shp
+centroids.shx
+docs/centroids.dat
+docs/centroids.dbd
+docs/centroids.dbf
+docs/centroids.key
+docs/centroids.prj
+docs/centroids.shp
+docs/centroids.shx
+docs/data/centroids.dat
+docs/data/centroids.dbd
+docs/data/centroids.dbf
+docs/data/centroids.key
+docs/data/centroids.prj
+docs/data/centroids.shp
+docs/data/centroids.shx
+docs/centroids.dat
+docs/centroids.dbd
+docs/centroids.dbf
+docs/centroids.key
+docs/centroids.prj
+docs/centroids.shp
+docs/centroids.shx
