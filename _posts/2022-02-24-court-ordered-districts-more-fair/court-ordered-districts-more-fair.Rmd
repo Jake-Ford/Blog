@@ -169,116 +169,122 @@ Households
 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-census_api_key('ba3d95cae3658f3145daf7f66119ed58a52aaca3')
-
-
-#white = P1_003N
-#black = P1_004N
-#hispanic =P2_002N
-#asian = P1_006N
-#median income = "B19301_001
-
-## load data
-blocks_2020_White <- get_decennial(
- geography="block",
- variables= "P1_003N", 
- summary_var = "P1_001N",
- state="NC",
- year=2020,
- geometry=TRUE,
-)
-
-
-blocks_2020_White$PctWhite <- blocks_2020_White$value/blocks_2020_White$summary_value
-
-
-
-blocks_2020_Black <- get_decennial(
- geography="block",
- variables= "P1_004N",
- summary_var = "P1_001N",
- state="NC",
- #county="Durham",
- year=2020,
- geometry=TRUE
-)
-
-blocks_2020_Black$PctBlack <- blocks_2020_Black$value/blocks_2020_Black$summary_value
-
-
-blocks_2020_Asian <- get_decennial(
- geography="block",
- variables= "P1_006N",
- summary_var = "P1_001N",
- state="NC",
- year=2020,
- geometry=TRUE
-)
-
-blocks_2020_Asian$PctAsian <- blocks_2020_Asian$value/blocks_2020_Asian$summary_value
-
-blocks_2020_Hispanic <- get_decennial(
- geography="block",
- variables= "P2_002N",
- summary_var = "P2_001N",
- state="NC",
- year=2020,
- geometry=TRUE
-)
-
-blocks_2020_Hispanic$PctHispanic <- blocks_2020_Hispanic$value/blocks_2020_Hispanic$summary_value
-
-
-NC_Income <- get_acs(
- geography="county",
- variables= "B19301_001", #Median Income per Capita in 2019 Inflation Adjusted Dollars
- state="NC",
- year=2019,
- geometry=TRUE,
-)  
-
-
+# census_api_key('ba3d95cae3658f3145daf7f66119ed58a52aaca3')
 # 
-# final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg,NC_Asian_2020_bg ) %>%
-#  select(GeoID, Name, pct_black, pct_hispanic, pct_white, pct_asian, HH_Vacant, geometry) %>%
-#  mutate(pct_other = 100 - (pct_black + pct_white + pct_asian))
 # 
+# #white = P1_003N
+# #black = P1_004N
+# #hispanic =P2_002N
+# #asian = P1_006N
+# #median income = "B19301_001
+# 
+# ## load data
+# blocks_2020_White <- get_decennial(
+#  geography="block",
+#  variables= "P1_003N", 
+#  summary_var = "P1_001N",
+#  state="NC",
+#  year=2020,
+#  geometry=TRUE,
+# )
+# 
+# 
+# blocks_2020_White$PctWhite <- blocks_2020_White$value/blocks_2020_White$summary_value
+# 
+# 
+# 
+# blocks_2020_Black <- get_decennial(
+#  geography="block",
+#  variables= "P1_004N",
+#  summary_var = "P1_001N",
+#  state="NC",
+#  #county="Durham",
+#  year=2020,
+#  geometry=TRUE
+# )
+# 
+# blocks_2020_Black$PctBlack <- blocks_2020_Black$value/blocks_2020_Black$summary_value
+# 
+# 
+# blocks_2020_Asian <- get_decennial(
+#  geography="block",
+#  variables= "P1_006N",
+#  summary_var = "P1_001N",
+#  state="NC",
+#  year=2020,
+#  geometry=TRUE
+# )
+# 
+# blocks_2020_Asian$PctAsian <- blocks_2020_Asian$value/blocks_2020_Asian$summary_value
+# 
+# blocks_2020_Hispanic <- get_decennial(
+#  geography="block",
+#  variables= "P2_002N",
+#  summary_var = "P2_001N",
+#  state="NC",
+#  year=2020,
+#  geometry=TRUE
+# )
+# 
+# blocks_2020_Hispanic$PctHispanic <- blocks_2020_Hispanic$value/blocks_2020_Hispanic$summary_value
+# 
+# 
+# NC_Income <- get_acs(
+#  geography="county",
+#  variables= "B19301_001", #Median Income per Capita in 2019 Inflation Adjusted Dollars
+#  state="NC",
+#  year=2019,
+#  geometry=TRUE,
+# )  
+# 
+# 
+# # 
+# # final_bgs <- cbind(NC_Hisp_2020_bg, NC_black_2020_bg, NC_white_2020_bg, NC_HH_2020_bg,NC_Asian_2020_bg ) %>%
+# #  select(GeoID, Name, pct_black, pct_hispanic, pct_white, pct_asian, HH_Vacant, geometry) %>%
+# #  mutate(pct_other = 100 - (pct_black + pct_white + pct_asian))
+# # 
+# 
+# blocks_2020 <- cbind(blocks_2020_White,blocks_2020_Black,blocks_2020_Asian,blocks_2020_Hispanic) %>%
+#   select(GEOID, NAME, PctWhite, PctBlack, PctAsian, PctHispanic) 
+# 
+# temp <- st_transform(blocks_2020, st_crs(nc_congressional_2019)) %>% st_make_valid()
+# 
+# 
+# centroids <- blocks_2020 %>%
+#   st_point_on_surface() %>%
+#   st_join(NC_Income %>%select(estimate)) %>%
+#   mutate(Med_Income = estimate)
+# 
+# ##next step includes tagging each of the four political representation 
+# 
+# #first, tag existing 2019 representation
+# 
+# centroids <- st_transform(centroids, st_crs(trm_taz_g2)) %>% st_make_valid()
+# nc_congressional_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
+# nc_congressional_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
+# nc_congressional_2021_feb <- st_transform(nc_congressional_2021_feb, st_crs(trm_taz_g2)) %>% st_make_valid()
+# nc_congress_court <- st_transform(nc_congress_court, st_crs(trm_taz_g2)) %>% st_make_valid()
+# 
+# nc_congressional_2019 <- nc_congressional_2019 %>%
+#   mutate( Party_2019 = case_when(
+#     sParty == "Democrat" ~ 1,
+#     sParty == "Republican" ~ 0
+#   ))
+# 
+# 
+# 
+# centroids <- centroids %>%
+#   st_join(nc_congressional_2019 %>% select(Party_2019 = sParty)) %>%
+#   st_join(nc_congressional_2021 %>% select(Party_2021 = Pred_Party)) %>%
+#   st_join(nc_congressional_2021_feb %>% select(Party_2021_Feb = Pred_Party)) %>%
+#   st_join(nc_congress_court %>% select(Party_2021_courts = Pred_Party))
+# 
+# 
+# st_write(centroids, "centroids.shp")
 
-blocks_2020 <- cbind(blocks_2020_White,blocks_2020_Black,blocks_2020_Asian,blocks_2020_Hispanic) %>%
-  select(GEOID, NAME, PctWhite, PctBlack, PctAsian, PctHispanic) 
+centroids <- st_read("/Users/jacobford/Documents/GitHub/Blog/centroids.shp")
 
-temp <- st_transform(blocks_2020, st_crs(nc_congressional_2019)) %>% st_make_valid()
-
-
-centroids <- blocks_2020 %>%
-  st_point_on_surface() %>%
-  st_join(NC_Income %>%select(estimate)) %>%
-  mutate(Med_Income = estimate)
-
-##next step includes tagging each of the four political representation 
-
-#first, tag existing 2019 representation
-
-centroids <- st_transform(centroids, st_crs(trm_taz_g2)) %>% st_make_valid()
-nc_congressional_2019 <- st_transform(nc_congressional_2019, st_crs(trm_taz_g2)) %>% st_make_valid()
-nc_congressional_2021 <- st_transform(nc_congressional_2021, st_crs(trm_taz_g2)) %>% st_make_valid()
-nc_congressional_2021_feb <- st_transform(nc_congressional_2021_feb, st_crs(trm_taz_g2)) %>% st_make_valid()
-nc_congress_court <- st_transform(nc_congress_court, st_crs(trm_taz_g2)) %>% st_make_valid()
-
-nc_congressional_2019 <- nc_congressional_2019 %>%
-  mutate( Party_2019 = case_when(
-    sParty == "Democrat" ~ 1,
-    sParty == "Republican" ~ 0
-  ))
-
-
-
-centroids <- centroids %>%
-  st_join(nc_congressional_2019 %>% select(Party_2019 = sParty)) %>%
-  st_join(nc_congressional_2021 %>% select(Party_2021 = Pred_Party)) %>%
-  st_join(nc_congressional_2021_feb %>% select(Party_2021_Feb = Pred_Party)) %>%
-  st_join(nc_congress_court %>% select(Party_2021_courts = Pred_Party))
-
+ 
 ```
 
 
@@ -377,6 +383,22 @@ We'll make the same summary stats to start. Notice how the February updated line
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
+
+##rename
+
+centroids$Party_2019 <- centroids$Pr_2019
+centroids$Party_2021 <- centroids$Pr_2021
+centroids$Party_2021_Feb <- centroids$P_2021_F
+centroids$Party_2021_courts <- centroids$Pr_2021_ 
+
+centroids$Med_Income <- centroids$Md_Incm
+centroids$PctWhite <- centroids$PctWhit
+centroids$PctBlack <- centroids$PctBlck
+centroids$PctHispanic <- centroids$PctHspn
+centroids$PctAsian <- centroids$PctAsin
+  ###
+  
+  
 centroids <- centroids %>%
   filter(!is.na(Party_2019))
 
@@ -618,7 +640,9 @@ ggplot(test, aes(x=PctBlack, y=Party_2021_courts)) + geom_point() +
   scale_y_continuous(name="Percent Democrat 2021")+ggtitle("Court Ordered Update")
 
 #=====================================================================#
+```
 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(test, aes(x=PctWhite, y=Party_2019_dummy)) + geom_point(fill='red') + 
   stat_smooth(method="glm", method.args=list(family=binomial(link='logit')), se=FALSE)+theme_minimal()+ scale_x_continuous(name="Percent White") +
   scale_y_continuous(name="Percent Democrat 2019")+ggtitle("2019 Districts White")
@@ -741,7 +765,7 @@ ggplot(df, aes(x=Year, y=vals))+geom_bar(stat='identity', position='dodge') + ge
 
 
 
-```{r message=FALSE, warning=FALSE, include=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
 ## Odds Ratios
 exp(coef(model_2019_blocks))
@@ -749,10 +773,10 @@ exp(coef(model_2021))
 exp(coef(feb_model))
 exp(coef(court_model))
 
-#exp(cbind(OR = coef(model_2019_blocks), confint(model_2019_blocks)))
+exp(cbind(OR = coef(model_2019_blocks), confint(model_2019_blocks)))
 exp(cbind(OR = coef(model_2021), confint(model_2021)))
 exp(cbind(OR = coef(feb_model), confint(feb_model)))
-#exp(cbind(OR = coef(court_model), confint(court_model)))
+exp(cbind(OR = coef(court_model), confint(court_model)))
 
 
 ```
@@ -906,13 +930,12 @@ ggplot(data = df,
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 
-
 model_data <- centroids %>% 
-  select(PARTY_2019,PARTY_2021,PARTY_2022, COURT_PART, PCT_BLC, PCT_HSP, PCT_WHT, PCT_ASN, Med_income_log)
-model_data$PARTY_2021 <- as.factor(model_data$PARTY_2021)
-model_data$PARTY_2019 <- as.factor(model_data$PARTY_2019)
-model_data$PARTY_2022 <- as.factor(model_data$PARTY_2022)
-model_data$COURT_PART <- as.factor(model_data$COURT_PART)
+  select(Party_2019_dummy,Party_2021,Party_2021_Feb, Party_2021_courts, PCT_BLC=PctBlack, PCT_HSP=PctHispanic, PCT_WHT=PctWhite, PCT_ASN=PctAsian, Med_income_log)
+model_data$PARTY_2021 <- as.factor(model_data$Party_2021)
+model_data$PARTY_2019 <- as.factor(model_data$Party_2019_dummy)
+model_data$PARTY_2022 <- as.factor(model_data$Party_2021_Feb)
+model_data$COURT_PART <- as.factor(model_data$Party_2021_courts)
 
 samp <- sample(nrow(model_data), 0.8*nrow(model_data))
 
