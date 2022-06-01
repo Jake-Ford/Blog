@@ -1,7 +1,5 @@
 ---
 title: "Home Ownership by Race"
-description: |
-  A short description of the post.
 author:
   - name: Jacob Ford
 date: 2022-05-31
